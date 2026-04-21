@@ -1,0 +1,204 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Town {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  logoUrl      String?
+  primaryColor String   @default("#1e40af")
+  contactEmail String?
+  aboutText    String?
+  inviteCode   String   @default("")
+  published    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  uploads          Upload[]
+  budgetRows       BudgetRow[]
+  columnMappings   ColumnMapping[]
+  tooltips         Tooltip[]
+  questions        ResidentQuestion[]
+  supportingLinks  SupportingLink[]
+  pdfDocuments     PdfDocument[]
+  staffUsers       StaffUser[]
+  capitalRequests  CapitalRequest[]
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+  sessions     Session[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Tooltip {
+  id     String @id @default(cuid())
+  townId String
+  town   Town   @relation(fields: [townId], references: [id], onDelete: Cascade)
+  scope  String // "category" | "line-item"
+  key    String // category name or lineItem identifier
+  text   String
+
+  @@unique([townId, scope, key])
+}
+
+model Upload {
+  id           String   @id @default(cuid())
+  townId       String
+  town         Town     @relation(fields: [townId], references: [id], onDelete: Cascade)
+  fileName     String
+  fileType     String
+  dataCategory String
+  rowCount     Int      @default(0)
+  status       String   @default("uploaded")
+  rawHeaders   String
+  createdAt    DateTime @default(now())
+}
+
+model ColumnMapping {
+  id           String  @id @default(cuid())
+  townId       String
+  town         Town    @relation(fields: [townId], references: [id], onDelete: Cascade)
+  dataCategory String
+  sourceColumn String
+  targetField  String
+  confidence   Float   @default(0)
+  confirmed    Boolean @default(false)
+
+  @@unique([townId, dataCategory, sourceColumn])
+}
+
+model BudgetRow {
+  id             String @id @default(cuid())
+  townId         String
+  town           Town   @relation(fields: [townId], references: [id], onDelete: Cascade)
+  uploadId       String
+  dataCategory   String
+
+  fundCode       String?
+  fundName       String?
+  department     String?
+  departmentCode String?
+  functionArea   String?
+  lineItem       String?
+  objectCode     String?
+  category1      String?
+  category2      String?
+  fiscalYear     String
+  amount         Float
+  amountType     String
+
+  purpose        String?
+  fundingSource  String?
+
+  createdAt      DateTime @default(now())
+
+  @@index([townId, dataCategory])
+  @@index([townId, dataCategory, fiscalYear])
+  @@index([townId, fundCode])
+}
+
+model ResidentQuestion {
+  id        String   @id @default(cuid())
+  townId    String
+  town      Town     @relation(fields: [townId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  message   String
+  status    String   @default("new")
+  reply     String?
+  createdAt DateTime @default(now())
+
+  @@index([townId, status])
+}
+
+model SupportingLink {
+  id          String   @id @default(cuid())
+  townId      String
+  town        Town     @relation(fields: [townId], references: [id], onDelete: Cascade)
+  title       String
+  url         String
+  description String?
+  category    String   @default("other")
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([townId])
+}
+
+model PdfDocument {
+  id        String   @id @default(cuid())
+  townId    String
+  town      Town     @relation(fields: [townId], references: [id], onDelete: Cascade)
+  fileName  String
+  filePath  String
+  fileSize  Int
+  title     String?
+  category  String   @default("other")
+  createdAt DateTime @default(now())
+
+  @@index([townId])
+}
+
+model StaffUser {
+  id           String   @id @default(cuid())
+  townId       String
+  town         Town     @relation(fields: [townId], references: [id], onDelete: Cascade)
+  email        String   @unique
+  passwordHash String
+  name         String
+  department   String?
+  createdAt    DateTime @default(now())
+
+  sessions        StaffSession[]
+  capitalRequests CapitalRequest[]
+}
+
+model StaffSession {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  user      StaffUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+}
+
+model CapitalRequest {
+  id            String    @id @default(cuid())
+  townId        String
+  town          Town      @relation(fields: [townId], references: [id], onDelete: Cascade)
+  staffUserId   String
+  staffUser     StaffUser @relation(fields: [staffUserId], references: [id])
+  department    String
+  purpose       String
+  description   String?
+  amount        Float
+  fundingSource String?
+  justification String?
+  fiscalYear    String
+  status        String    @default("submitted")
+  adminNotes    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([townId, status])
+  @@index([staffUserId])
+}

@@ -1,0 +1,87 @@
+REV_CATEGORY_1,REV_CATEGORY_2,Description,2023 ACTUAL,2024 ACTUAL,2025 ACTUAL,2026 BUDGET
+Real & Personal Property Taxes,Property Taxes,Prior Year Levy Limit,,24477465,25881586,27017460
+Real & Personal Property Taxes,Property Taxes,2.5% Increase,,611937,647040,675437
+Real & Personal Property Taxes,Property Taxes,New Growth,,792184,488834,200000
+Real & Personal Property Taxes,Property Taxes,Override,,0,0,0
+Real & Personal Property Taxes,Excluded Debt,Debt Exclusions,,1158077,1135464,587128
+Real & Personal Property Taxes,Excluded Debt,Bond Premium Amortization,,-25706,-22884,-20062
+Real & Personal Property Taxes,Excluded Debt,School Projects,,1895438,1836062,1781188
+Real & Personal Property Taxes,Levy Reductions,Amount not raised due to rounding,,-12797,-2679,0
+Real & Personal Property Taxes,Levy Reductions,Allowance for Abatements and Exemptions,,-150203,-200000,-200000
+Real & Personal Property Taxes,Levy Reductions,Snow and Ice Deficit,,0,0,0
+Real & Personal Property Taxes,Levy Reductions,Overlay Deficit,,0,0,0
+Real & Personal Property Taxes,Levy Reductions,Capital Article,,0,0,0
+Real & Personal Property Taxes,Levy Reductions,Capital Stabilization,,-687942,-705141,-722770
+Real & Personal Property Taxes,Levy Reductions,Portion of New Growth attributable to Capital Stabilization Fund,,-17199,-17629,-18069
+State Aid and Assessments,Education State Aid,Chapter 70 Aid,,5669325,5805981,5901981
+State Aid and Assessments,Education State Aid,Charter School Reimbursements,,17674,0,30646
+State Aid and Assessments,Town State Aid,Unrestricted General Government Aid,,933205,961202,982348
+State Aid and Assessments,Town State Aid,Veterans Benefits,,34569,33429,51801
+State Aid and Assessments,Town State Aid,Exemptions,,40427,41968,68043
+State Aid and Assessments,Town State Aid,State Owned Land,,246478,252391,257017
+State Aid and Assessments,Town State Aid,Miscellaneous,,0,0,0
+State Aid and Assessments,Town State Aid,Offset Items,,314007,405317,315841
+State Aid and Assessments,State Assessments,State Education Assessment,,0,0,0
+State Aid and Assessments,State Assessments,State Assessments,,-9252,-9718,-9906
+State Aid and Assessments,State Assessments,Transportation Assessments,,-68498,-69930,-71948
+State Aid and Assessments,State Assessments,Special Education (State Wards),,-19090,-19984,-21599
+State Aid and Assessments,State Assessments,School Choice,,-282704,-282424,-284970
+State Aid and Assessments,State Assessments,Charter School,,-45124,0,-44247
+Local Receipts,Excise and Local Option Taxes,Motor Vehicle Excise,1945091,2006297,1534683,1806107
+Local Receipts,Excise and Local Option Taxes,Rooms and Meals Tax,211750,196529,85000,100000
+Local Receipts,Excise and Local Option Taxes,Boat and Farm Animal Excise,3551,3755,2500,2500
+Local Receipts,Excise and Local Option Taxes,Penalties and Interest on Late Tax and Excise Payments,95505,78821,70000,70000
+Local Receipts,Departmental Fees,Cable Access,134164,142522,0,0
+Local Receipts,Departmental Fees,Recreation,19317,21714,8000,8000
+Local Receipts,Departmental Fees,Collector Demands,17199,18617,10000,10000
+Local Receipts,Departmental Fees,Town Clerk,5797,7044,3000,3000
+Local Receipts,Departmental Fees,Finance,5043,5031,0,0
+Local Receipts,Departmental Fees,Conservation,0,600,0,0
+Local Receipts,Departmental Fees,Planning Board,6815,6342,5000,5000
+Local Receipts,Departmental Fees,Zoning Board,3258,4382,0,0
+Local Receipts,Departmental Fees,Earth Removal Board,0,0,0,0
+Local Receipts,Departmental Fees,Police Off-Duty,13718,32271,5000,5000
+Local Receipts,Departmental Fees,Human Resources,0,0,0,0
+Local Receipts,Departmental Fees,Board of Health,10590,45880,8000,8000
+Local Receipts,Departmental Fees,Building Inspector,561670,210663,100000,100000
+Local Receipts,Departmental Fees,Gas Inspector,19917,19230,5000,5000
+Local Receipts,Departmental Fees,Plumbing Inspector,82597,33238,10000,10000
+Local Receipts,Departmental Fees,Wiring Inspector,129515,63470,30000,30000
+Local Receipts,Departmental Fees,Animal Control,0,0,0,0
+Local Receipts,Departmental Fees,Cemetery Commission,5600,8754,1000,1000
+Local Receipts,Rentals,Manchaug Library,13521,15156,11000,11000
+Local Receipts,Rentals,Solar Energy Credits,32032,39322,20000,20000
+Local Receipts,Rentals,Sale of Cell Tower Lease,1400000,0,0,0
+Local Receipts,Rentals,Cell Tower Rentals,67538,62033,50000,50000
+Local Receipts,Investment of Funds,Bank Investment Income,190031,438247,113000,113000
+Local Receipts,Fines and Forfeits,Building Inspector,0,0,0,0
+Local Receipts,Fines and Forfeits,Police - RMV,0,0,0,0
+Local Receipts,Fines and Forfeits,Police Fines,36957,55514,30000,30000
+Local Receipts,Fines and Forfeits,Library,115,61,0,0
+Local Receipts,Licenses and Permits,Fire,23493,20348,13000,13000
+Local Receipts,Licenses and Permits,Liquor,12615,11135,10000,10000
+Local Receipts,Licenses and Permits,Dog,20500,21860,15000,15000
+Local Receipts,Licenses and Permits,Police,4700,6487,4000,4000
+Local Receipts,Licenses and Permits,Board of Health,57260,50130,40000,40000
+Local Receipts,Other Departmental Receipts,Tax Collector CML's,11750,10100,10000,10000
+Local Receipts,Other Departmental Receipts,Tax Collector Mark Fees,8820,6560,5000,5000
+Local Receipts,Other Departmental Receipts,Tax Collector Other,7249,9402,4000,4000
+Local Receipts,Other Departmental Receipts,Select Board,1359,750,0,0
+Local Receipts,Other Departmental Receipts,Treasurer,5742,4284,0,0
+Local Receipts,Other Departmental Receipts,Highway,0,0,0,0
+Local Receipts,Other Departmental Receipts,Medicare Receipts,178811,144532,0,0
+Local Receipts,Other Departmental Receipts,Opioid Settlement,76082,88023,0,0
+Local Receipts,Other Departmental Receipts,Supplemental State Aid,0,0,0,0
+Local Receipts,Other Departmental Receipts,Supplemental Real Estate Tax Bills,0,0,0,0
+Local Receipts,Other Departmental Receipts,DE-1 Adjustment,0,0,0,0
+Local Receipts,Other Departmental Receipts,Sale of Surplus Property,24269,11733,0,0
+Local Receipts,Other Departmental Receipts,Energy Rebate,0,0,0,0
+Local Receipts,Other Departmental Receipts,Cell Tower Lease Signing Bonus,0,0,0,0
+Local Receipts,Other Departmental Receipts,Other Departmental Receipts,326,350,0,0
+Transfers In,Indirect Costs,Enterprise Funds Indirect Costs,111739,111739,111739,111739
+Transfers In,Reserve Transfers In,Debt Service Reserve,3190,2931,2673,2414
+Transfers In,Reserve Transfers In,Compensated Absences Reserve,0,0,85000,0
+Transfers In,Reserve Transfers In,Transfer from Capital Stabilization,256173,245422,234673,223922
+Transfers In,Reserve Transfers In,Other Financing Sources,20336,0,5000,0
+Transfers In,Reserve Transfers In,Transfer from Health Insurance Stabilization,0,0,56000,56000
+Transfers In,Free Cash,Use of Free Cash,0,0,0,0

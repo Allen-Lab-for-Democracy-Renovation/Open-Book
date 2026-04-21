@@ -1,0 +1,60 @@
+DEPT CODE,DEPARTMENT,FUNCTION_1,FUNCTION_2
+113,Professional Services,Administration & Finance,General Government
+114,Town Moderator,Administration & Finance,General Government
+122,Select Board,Administration & Finance,General Government
+123,Town Manager,Administration & Finance,General Government
+131,Finance Committee,Administration & Finance,General Government
+132,Reserve Fund,Administration & Finance,General Government
+135,Finance Director,Administration & Finance,General Government
+138,Central Purchasing,Administration & Finance,General Government
+141,Board of Assessors,Administration & Finance,General Government
+145,Town Treasurer,Administration & Finance,General Government
+146,Tax Collector,Administration & Finance,General Government
+147,Human Resources,Administration & Finance,General Government
+151,Town Counsel,Administration & Finance,General Government
+152,Personnel,Administration & Finance,General Government
+155,Data Processing,Administration & Finance,General Government
+161,Town Clerk,Administration & Finance,General Government
+162,Elections and Registrations,Administration & Finance,General Government
+171,Conservation Commission,Land Use,General Government
+172,Waters Farm Maintenance,Land Use,General Government
+173,Community and Economic Development,Land Use,General Government
+175,Planning Board,Land Use,General Government
+176,Zoning Board of Appeals,Land Use,General Government
+192,Public Buildings,Administration & Finance,General Government
+195,Town Report,Administration & Finance,General Government
+199,Government Access,Administration & Finance,General Government
+210,Police Department,,Public Safety
+220,Fire Department,,Public Safety
+230,Ambulance Service,,Public Safety
+241,Building Inspector,Inspectional Services,Public Safety
+243,Plumbing Inspector,Inspectional Services,Public Safety
+244,Sealer of Weights and Measures,Inspectional Services,Public Safety
+245,Electrical Inspector,Inspectional Services,Public Safety
+291,Emergency Management,,Public Safety
+292,Animal Control,,Public Safety
+300,Sutton Public Schools,,Education
+301,School Tuition Out,,Education
+422,Highway Department,Highways and Streets,Public Works
+423,Snow and Ice Removal,Highways and Streets,Public Works
+424,Street Lighting,Highways and Streets,Public Works
+434,Landfill,,Public Works
+441,Sewer Department,,Public Works
+445,Transfer Station,,Public Works
+491,Cemetery Commission,,Public Works
+510,Board of Health,,Health and Human Services
+541,Council on Aging,,Health and Human Services
+543,Veterans Services,,Health and Human Services
+610,Library Department,,Culture and Recreation
+630,Recreation Commission,,Culture and Recreation
+691,Historical Commission,,Culture and Recreation
+692,Memorial Day,,Culture and Recreation
+710,Retirement of Debt,,Debt Service
+751,Long Term Debt Interest,,Debt Service
+800,Other Assessments,,Intergovernmental Expenditures
+900,Insurance and Benefits,Employee Benefits,Unclassified
+910,Retirement Assessments,Employee Benefits,Unclassified
+912,Other Assessments,,Unclassified
+913,Unemployment Compensation,Employee Benefits,Unclassified
+945,Casualty Insurance,Other Unclassified,Unclassified
+990,Transfers to Other Funds,,Transfers

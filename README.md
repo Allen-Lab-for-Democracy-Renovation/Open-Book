@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OpenBook
+
+A municipal budget transparency platform. OpenBook lets towns publish their budgets online so residents can explore expenses, revenues, and capital projects in plain language.
+
+![Homepage](docs/screenshots/homepage.png)
+
+## Town Budget Portal
+
+Each town gets a branded portal with tabbed navigation across budget categories, summary tiles, interactive charts, searchable line-item tables, exportable data, and a printable budget book.
+
+![Town Portal](docs/screenshots/town-portal.png)
+
+## Admin Dashboard
+
+Town administrators upload budget data (CSV or Excel), customize portal branding, add plain-language tooltips for budget items, manage supporting documents, and respond to resident questions.
+
+![Admin](docs/screenshots/admin-upload.png)
+
+## Features
+
+**For residents**
+- Budget overview with year-over-year comparisons
+- Expense and revenue breakdowns by department and function
+- Capital project listings with funding sources
+- Searchable line-item tables with export to spreadsheet
+- Printable budget book generation
+- "Ask a Question" form routed to the town's finance office
+- Supporting documents and external links
+
+**For administrators**
+- CSV/Excel upload with automatic column detection
+- Portal branding (name, colors, logo, contact info)
+- Tooltips that explain budget items in plain language
+- Document and link management
+- Resident question inbox with reply functionality
+- Staff capital request review and approval
+
+**For town staff**
+- Capital expenditure request submission
+- Request tracking and status updates
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- npm
+
+### Setup
+
+```bash
+npm install
+```
+
+Create a `.env` file:
+
+```
+DATABASE_URL="file:./dev.db"
+ADMIN_SETUP_KEY="your-setup-key"
+```
+
+Initialize the database and seed sample data:
+
+```bash
+npx prisma migrate dev
+npm run seed
+```
+
+Start the dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Framework**: Next.js 16 (App Router, Turbopack)
+- **Database**: SQLite via Prisma with better-sqlite3
+- **Styling**: Tailwind CSS v4
+- **Charts**: Chart.js + react-chartjs-2
+- **Data import**: PapaParse (CSV), SheetJS (Excel)

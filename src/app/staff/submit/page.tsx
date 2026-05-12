@@ -37,7 +37,7 @@ export default function StaffSubmitPage() {
           description: description || undefined,
           amount: numericAmount,
           fundingSource: fundingSource || undefined,
-          justification: justification || undefined,
+          justification,
           fiscalYear,
         }),
       });
@@ -181,7 +181,7 @@ export default function StaffSubmitPage() {
 
         <div>
           <label htmlFor="justification" className="block text-sm font-medium text-gray-700 mb-1">
-            Justification <span className="text-gray-400 font-normal">(optional)</span>
+            Justification
           </label>
           <textarea
             id="justification"
@@ -190,6 +190,7 @@ export default function StaffSubmitPage() {
             rows={3}
             placeholder="Why is this expenditure necessary? What problem does it solve?"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+            required
           />
         </div>
 

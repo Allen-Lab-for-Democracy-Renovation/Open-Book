@@ -49,9 +49,9 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { department, purpose, description, amount, fundingSource, justification, fiscalYear } = body;
 
-    if (!department || !purpose || !amount || !fiscalYear) {
+    if (!department || !purpose || !amount || !fiscalYear || !justification) {
       return NextResponse.json(
-        { error: "Department, purpose, amount, and fiscal year are required" },
+        { error: "Department, purpose, amount, fiscal year, and justification are required" },
         { status: 400 }
       );
     }

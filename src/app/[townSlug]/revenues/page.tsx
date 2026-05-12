@@ -1,6 +1,11 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { groupAndSum, toChartData, buildRevenueSummaryTiles, detectCurrentAndPreviousYear } from "@/lib/aggregator";
+import {
+  groupAndSum,
+  toChartData,
+  buildRevenueSummaryTiles,
+  detectCurrentAndPreviousYear,
+} from "@/lib/aggregator";
 import { formatCurrency } from "@/lib/format";
 import SummaryTiles from "@/components/portal/SummaryTiles";
 import PieChart from "@/components/portal/PieChart";
@@ -32,13 +37,16 @@ export default async function RevenuesPage({
     where: { townId: town.id, dataCategory: "revenues" },
   });
 
-  const { currentYear, previousYear, allYears } = detectCurrentAndPreviousYear(allRows);
+  const { currentYear, previousYear, allYears } =
+    detectCurrentAndPreviousYear(allRows);
 
   const current = allRows.filter(
     (r) => r.fiscalYear === currentYear && r.amountType === "budget"
   );
   const prev = allRows.filter(
-    (r) => r.fiscalYear === previousYear && (r.amountType === "actual" || r.amountType === "budget")
+    (r) =>
+      r.fiscalYear === previousYear &&
+      (r.amountType === "actual" || r.amountType === "budget")
   );
 
   const tiles = buildRevenueSummaryTiles(current, prev);
@@ -55,7 +63,7 @@ export default async function RevenuesPage({
     ),
   }));
 
-  // Table grouped by category -> subcategory
+  // Table grouped by category -> line item, showing the most recent 3 fiscal years.
   type TableRow = {
     id: string;
     cells: (string | number | null)[];
@@ -63,6 +71,31 @@ export default async function RevenuesPage({
     isSubtotal?: boolean;
     depth?: number;
   };
+
+  const tableYears = allYears.length > 0 ? allYears : [currentYear];
+
+  const catTotalsByYear = new Map<string, Map<string, number>>();
+  const lineTotalsByYear = new Map<string, Map<string, number>>();
+
+  for (const year of tableYears) {
+    const yearRows = allRows.filter(
+      (r) =>
+        r.fiscalYear === year &&
+        (year === currentYear
+          ? r.amountType === "budget"
+          : r.amountType === "budget" || r.amountType === "actual")
+    );
+    const catMap = new Map<string, number>();
+    const lineMap = new Map<string, number>();
+    for (const row of yearRows) {
+      const cat = row.category1 || "Other";
+      const lineKey = `${cat}|${row.lineItem || row.category2 || ""}`;
+      catMap.set(cat, (catMap.get(cat) || 0) + row.amount);
+      lineMap.set(lineKey, (lineMap.get(lineKey) || 0) + row.amount);
+    }
+    catTotalsByYear.set(year, catMap);
+    lineTotalsByYear.set(year, lineMap);
+  }
 
   const tableRows: TableRow[] = [];
   const catGroups = new Map<string, typeof current>();
@@ -74,46 +107,64 @@ export default async function RevenuesPage({
   }
 
   for (const [cat, catRows] of catGroups) {
-    const catTotal = catRows.reduce((s, r) => s + r.amount, 0);
     tableRows.push({
       id: `cat-${cat}`,
-      cells: [cat, catTotal],
+      cells: [
+        cat,
+        ...tableYears.map((y) => catTotalsByYear.get(y)?.get(cat) || 0),
+      ],
       isGroup: true,
     });
 
     for (const row of catRows) {
+      const lineKey = `${cat}|${row.lineItem || row.category2 || ""}`;
       tableRows.push({
         id: row.id,
-        cells: [row.lineItem || row.category2 || "", row.amount],
+        cells: [
+          row.lineItem || row.category2 || "",
+          ...tableYears.map((y) => lineTotalsByYear.get(y)?.get(lineKey) || 0),
+        ],
         depth: 1,
       });
     }
   }
 
-  const exportData = current.map((r) => ({
-    Category: r.category1 || "",
-    Subcategory: r.category2 || "",
-    Description: r.lineItem || "",
-    [`FY${currentYear} Budget`]: formatCurrency(r.amount),
-  }));
+  const exportData = current.map((r) => {
+    const cat = r.category1 || "Other";
+    const lineKey = `${cat}|${r.lineItem || r.category2 || ""}`;
+    const yearCols: Record<string, string> = {};
+    for (const y of tableYears) {
+      yearCols[`FY${y}`] = formatCurrency(
+        lineTotalsByYear.get(y)?.get(lineKey) || 0
+      );
+    }
+    return {
+      Category: r.category1 || "",
+      Subcategory: r.category2 || "",
+      Description: r.lineItem || "",
+      ...yearCols,
+    };
+  });
 
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Revenues</h1>
-          <p className="text-gray-500 mt-1">FY{currentYear} revenue by source</p>
+          <p className="text-gray-500 mt-1">Yearly revenue by source</p>
         </div>
-        <ExportButton data={exportData} filename={`${town.slug}-revenues-fy${currentYear}`} />
+        <ExportButton
+          data={exportData}
+          filename={`${town.slug}-revenues-fy${currentYear}`}
+        />
       </div>
 
       <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
         <p className="text-sm text-emerald-800 leading-relaxed">
-          <strong>What are revenues?</strong>{" "}
-          Revenue is the money the town collects to pay for services.
-          The largest source is usually property taxes. State aid
-          (Chapter 70 for schools, unrestricted government aid) is
-          the second largest. Local receipts include things like motor
+          <strong>What are revenues?</strong> Revenue is the money the town
+          collects to pay for services. The largest source is usually property
+          taxes. State aid (Chapter 70 for schools, unrestricted government aid)
+          is the second largest. Local receipts include things like motor
           vehicle excise tax, permits, and fees.
         </p>
       </div>
@@ -135,10 +186,11 @@ export default async function RevenuesPage({
       </div>
 
       <BudgetTable
-        headers={["Description", `FY${currentYear} Budget`]}
+        headers={["Description"]}
         rows={tableRows}
         categoryTooltips={categoryTooltips}
         lineItemTooltips={lineItemTooltips}
+        yearColumns={{ years: tableYears }}
       />
     </div>
   );

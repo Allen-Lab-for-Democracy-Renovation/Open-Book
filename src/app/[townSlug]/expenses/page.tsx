@@ -1,7 +1,12 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { groupAndSum, toChartData, buildExpenseSummaryTiles, detectCurrentAndPreviousYear } from "@/lib/aggregator";
-import { formatCurrency, calculateChange } from "@/lib/format";
+import {
+  groupAndSum,
+  toChartData,
+  buildExpenseSummaryTiles,
+  detectCurrentAndPreviousYear,
+} from "@/lib/aggregator";
+import { formatCurrency } from "@/lib/format";
 import SummaryTiles from "@/components/portal/SummaryTiles";
 import PieChart from "@/components/portal/PieChart";
 import BarChart from "@/components/portal/BarChart";
@@ -32,13 +37,19 @@ export default async function ExpensesPage({
     where: { townId: town.id, dataCategory: "expenses" },
   });
 
-  const { currentYear, previousYear: prevYear, allYears } = detectCurrentAndPreviousYear(allRows);
+  const {
+    currentYear,
+    previousYear: prevYear,
+    allYears,
+  } = detectCurrentAndPreviousYear(allRows);
 
   const current = allRows.filter(
     (r) => r.fiscalYear === currentYear && r.amountType === "budget"
   );
   const prev = allRows.filter(
-    (r) => r.fiscalYear === prevYear && (r.amountType === "budget" || r.amountType === "actual")
+    (r) =>
+      r.fiscalYear === prevYear &&
+      (r.amountType === "budget" || r.amountType === "actual")
   );
 
   const tiles = buildExpenseSummaryTiles(current, prev);
@@ -50,14 +61,12 @@ export default async function ExpensesPage({
     label: fn,
     data: years.map((y) =>
       allRows
-        .filter(
-          (r) => r.functionArea === fn && r.fiscalYear === y
-        )
+        .filter((r) => r.functionArea === fn && r.fiscalYear === y)
         .reduce((s, r) => s + r.amount, 0)
     ),
   }));
 
-  // Build table rows grouped by function -> department
+  // Build table rows grouped by function -> department, showing the most recent 3 fiscal years.
   type TableRow = {
     id: string;
     cells: (string | number | null)[];
@@ -65,6 +74,46 @@ export default async function ExpensesPage({
     isSubtotal?: boolean;
     depth?: number;
   };
+
+  // tableYears includes every fiscal year we have data for (ascending). The
+  // BudgetTable defaults to showing the most recent 3 columns and exposes a
+  // dropdown to toggle the rest when more than 3 years are available.
+  const tableYears = allYears.length > 0 ? allYears : [currentYear];
+
+  // For each year, aggregate amounts by function, department, and line key.
+  // Current year uses "budget"; prior years fall back to budget/actual.
+  const fnTotalsByYear = new Map<string, Map<string, number>>();
+  const deptTotalsByYear = new Map<string, Map<string, number>>();
+  const lineTotalsByYear = new Map<string, Map<string, number>>();
+
+  for (const year of tableYears) {
+    const yearRows = allRows.filter(
+      (r) =>
+        r.fiscalYear === year &&
+        (year === currentYear
+          ? r.amountType === "budget"
+          : r.amountType === "budget" || r.amountType === "actual")
+    );
+    const fnMap = new Map<string, number>();
+    const deptMap = new Map<string, number>();
+    const lineMap = new Map<string, number>();
+    for (const row of yearRows) {
+      const fn = row.functionArea || "Other";
+      const dept = row.department || "Other";
+      const lineKey = `${fn}|${dept}|${row.objectCode || ""}|${
+        row.lineItem || ""
+      }`;
+      fnMap.set(fn, (fnMap.get(fn) || 0) + row.amount);
+      deptMap.set(
+        `${fn}|${dept}`,
+        (deptMap.get(`${fn}|${dept}`) || 0) + row.amount
+      );
+      lineMap.set(lineKey, (lineMap.get(lineKey) || 0) + row.amount);
+    }
+    fnTotalsByYear.set(year, fnMap);
+    deptTotalsByYear.set(year, deptMap);
+    lineTotalsByYear.set(year, lineMap);
+  }
 
   const tableRows: TableRow[] = [];
   const functionGroups = new Map<string, typeof current>();
@@ -75,18 +124,14 @@ export default async function ExpensesPage({
     functionGroups.get(fn)!.push(row);
   }
 
-  // Build prev lookup for change calc
-  const prevByKey = new Map<string, number>();
-  for (const row of prev) {
-    const key = `${row.objectCode}-${row.lineItem}`;
-    prevByKey.set(key, (prevByKey.get(key) || 0) + row.amount);
-  }
-
   for (const [fn, fnRows] of functionGroups) {
-    const fnTotal = fnRows.reduce((s, r) => s + r.amount, 0);
     tableRows.push({
       id: `fn-${fn}`,
-      cells: [fn, "", fnTotal, null, null],
+      cells: [
+        fn,
+        "",
+        ...tableYears.map((y) => fnTotalsByYear.get(y)?.get(fn) || 0),
+      ],
       isGroup: true,
     });
 
@@ -99,26 +144,31 @@ export default async function ExpensesPage({
     }
 
     for (const [dept, deptRows] of deptGroups) {
-      const deptTotal = deptRows.reduce((s, r) => s + r.amount, 0);
       tableRows.push({
         id: `dept-${fn}-${dept}`,
-        cells: [dept, "", deptTotal, null, null],
+        cells: [
+          dept,
+          "",
+          ...tableYears.map(
+            (y) => deptTotalsByYear.get(y)?.get(`${fn}|${dept}`) || 0
+          ),
+        ],
         isSubtotal: true,
         depth: 1,
       });
 
       for (const row of deptRows) {
-        const key = `${row.objectCode}-${row.lineItem}`;
-        const prevAmt = prevByKey.get(key) || 0;
-        const change = calculateChange(prevAmt, row.amount);
+        const lineKey = `${fn}|${dept}|${row.objectCode || ""}|${
+          row.lineItem || ""
+        }`;
         tableRows.push({
           id: row.id,
           cells: [
             row.lineItem || row.objectCode || "",
             row.objectCode || "",
-            row.amount,
-            change.absolute,
-            change.percent,
+            ...tableYears.map(
+              (y) => lineTotalsByYear.get(y)?.get(lineKey) || 0
+            ),
           ],
           depth: 2,
         });
@@ -126,34 +176,47 @@ export default async function ExpensesPage({
     }
   }
 
-  const exportData = current.map((r) => ({
-    Function: r.functionArea || "",
-    Department: r.department || "",
-    "Line Item": r.lineItem || "",
-    Account: r.objectCode || "",
-    [`FY${currentYear} Budget`]: formatCurrency(r.amount),
-  }));
+  const exportData = current.map((r) => {
+    const lineKey = `${r.functionArea || "Other"}|${r.department || "Other"}|${
+      r.objectCode || ""
+    }|${r.lineItem || ""}`;
+    const yearCols: Record<string, string> = {};
+    for (const y of tableYears) {
+      yearCols[`FY${y}`] = formatCurrency(
+        lineTotalsByYear.get(y)?.get(lineKey) || 0
+      );
+    }
+    return {
+      Function: r.functionArea || "",
+      Department: r.department || "",
+      "Line Item": r.lineItem || "",
+      Account: r.objectCode || "",
+      ...yearCols,
+    };
+  });
 
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Expenses</h1>
-          <p className="text-gray-500 mt-1">
-            FY{currentYear} departmental spending
-          </p>
+          <p className="text-gray-500 mt-1">Yearly departmental spending</p>
         </div>
-        <ExportButton data={exportData} filename={`${town.slug}-expenses-fy${currentYear}`} />
+        <ExportButton
+          data={exportData}
+          filename={`${town.slug}-expenses-fy${currentYear}`}
+        />
       </div>
 
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
         <p className="text-sm text-amber-800 leading-relaxed">
-          <strong>How to read this page:</strong>{" "}
-          The summary tiles show the big picture — total spending,
-          the largest area, and how it changed from last year. The charts
-          below break spending down visually. Scroll further to see every
-          line item in a searchable table. Look for the{" "}
-          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-300 text-gray-600 text-[10px] font-bold">?</span>{" "}
+          <strong>How to read this page:</strong> The summary tiles show the big
+          picture — total spending, the largest area, and how it changed from
+          last year. The charts below break spending down visually. Scroll
+          further to see every line item in a searchable table. Look for the{" "}
+          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-300 text-gray-600 text-[10px] font-bold">
+            ?
+          </span>{" "}
           icon next to items — hover or tap it for a plain-language explanation.
         </p>
       </div>
@@ -175,16 +238,11 @@ export default async function ExpensesPage({
       </div>
 
       <BudgetTable
-        headers={["Description", "Account", `FY${currentYear}`, "$ Change", "% Change"]}
-        rows={tableRows.map((r) => ({
-          ...r,
-          cells: r.cells.map((c, i) => {
-            if (i === 4 && typeof c === "number") return `${c >= 0 ? "+" : ""}${c.toFixed(1)}%`;
-            return c;
-          }),
-        }))}
+        headers={["Description", "Account"]}
+        rows={tableRows}
         categoryTooltips={categoryTooltips}
         lineItemTooltips={lineItemTooltips}
+        yearColumns={{ years: tableYears }}
       />
     </div>
   );

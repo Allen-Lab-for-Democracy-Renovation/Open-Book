@@ -29,6 +29,7 @@ export default function DataManagementPage() {
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState<string | null>(null);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [error, setError] = useState("");
 
@@ -74,6 +75,50 @@ export default function DataManagementPage() {
       setError("Failed to delete upload");
     } finally {
       setDeleting(null);
+    }
+  };
+
+  const handleDownload = async (upload: Upload) => {
+    setDownloading(upload.id);
+    try {
+      const res = await fetch(`/api/uploads/${upload.id}`);
+      if (!res.ok) {
+        setError("Failed to download data");
+        return;
+      }
+      const { rows } = await res.json();
+      if (!rows || rows.length === 0) {
+        setError("No data to download");
+        return;
+      }
+      const fields = [
+        "dataCategory", "fiscalYear", "amountType", "amount",
+        "functionArea", "department", "lineItem", "objectCode",
+        "category1", "category2", "fundCode", "fundName",
+      ];
+      const csvRows = [
+        fields.join(","),
+        ...rows.map((r: Record<string, string | number | null>) =>
+          fields.map((f) => {
+            const val = r[f];
+            if (val == null) return "";
+            const str = val.toString();
+            return str.includes(",") || str.includes('"')
+              ? `"${str.replace(/"/g, '""')}"` : str;
+          }).join(",")
+        ),
+      ];
+      const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = upload.fileName.replace(/\.[^.]+$/, "") + "-export.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError("Failed to download data");
+    } finally {
+      setDownloading(null);
     }
   };
 
@@ -188,6 +233,14 @@ export default function DataManagementPage() {
                       {new Date(upload.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 text-right space-x-3">
+                      <button
+                        onClick={() => handleDownload(upload)}
+                        disabled={downloading === upload.id}
+                        className="text-gray-600 hover:text-gray-800 text-sm disabled:opacity-50"
+                        aria-label={`Download upload ${upload.fileName}`}
+                      >
+                        {downloading === upload.id ? "Downloading..." : "Download"}
+                      </button>
                       <button
                         onClick={async () => {
                           if (!confirm(`Replace "${upload.fileName}"? This will delete the current data and open the upload page so you can re-upload with new mappings.`)) return;

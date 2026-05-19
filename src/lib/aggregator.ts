@@ -27,30 +27,37 @@ export function buildExpenseSummaryTiles(
   previousRows: BudgetRow[]
 ): SummaryTile[] {
   const currentTotal = currentRows.reduce((s, r) => s + r.amount, 0);
-  const previousTotal = previousRows.reduce((s, r) => s + r.amount, 0);
-  const change = calculateChange(previousTotal, currentTotal);
 
   const byFunction = groupAndSum(currentRows, "functionArea");
   const topFunction = Object.entries(byFunction).sort((a, b) => b[1] - a[1])[0];
 
-  return [
+  const tiles: SummaryTile[] = [
     { label: "Total Budget", value: abbreviateCurrency(currentTotal) },
     {
       label: "Largest Area",
       value: topFunction ? topFunction[0] : "N/A",
     },
-    {
-      label: "$ Change from Last Year",
-      value: formatCurrency(change.absolute),
-      change: formatPercent(change.percent),
-      changeType: change.absolute >= 0 ? "positive" : "negative",
-    },
-    {
-      label: "% Change from Last Year",
-      value: formatPercent(change.percent),
-      changeType: change.percent >= 0 ? "positive" : "negative",
-    },
   ];
+
+  if (previousRows.length > 0) {
+    const previousTotal = previousRows.reduce((s, r) => s + r.amount, 0);
+    const change = calculateChange(previousTotal, currentTotal);
+    tiles.push(
+      {
+        label: "$ Change from Last Year",
+        value: formatCurrency(change.absolute),
+        change: formatPercent(change.percent),
+        changeType: change.absolute >= 0 ? "positive" : "negative",
+      },
+      {
+        label: "% Change from Last Year",
+        value: formatPercent(change.percent),
+        changeType: change.percent >= 0 ? "positive" : "negative",
+      }
+    );
+  }
+
+  return tiles;
 }
 
 export function buildRevenueSummaryTiles(
@@ -58,26 +65,33 @@ export function buildRevenueSummaryTiles(
   previousRows: BudgetRow[]
 ): SummaryTile[] {
   const currentTotal = currentRows.reduce((s, r) => s + r.amount, 0);
-  const previousTotal = previousRows.reduce((s, r) => s + r.amount, 0);
-  const change = calculateChange(previousTotal, currentTotal);
 
   const byCat = groupAndSum(currentRows, "category1");
   const topCat = Object.entries(byCat).sort((a, b) => b[1] - a[1])[0];
 
-  return [
+  const tiles: SummaryTile[] = [
     { label: "Total Revenue", value: abbreviateCurrency(currentTotal) },
     { label: "Top Source", value: topCat ? topCat[0] : "N/A" },
-    {
-      label: "$ Change",
-      value: formatCurrency(change.absolute),
-      changeType: change.absolute >= 0 ? "positive" : "negative",
-    },
-    {
-      label: "% Change",
-      value: formatPercent(change.percent),
-      changeType: change.percent >= 0 ? "positive" : "negative",
-    },
   ];
+
+  if (previousRows.length > 0) {
+    const previousTotal = previousRows.reduce((s, r) => s + r.amount, 0);
+    const change = calculateChange(previousTotal, currentTotal);
+    tiles.push(
+      {
+        label: "$ Change",
+        value: formatCurrency(change.absolute),
+        changeType: change.absolute >= 0 ? "positive" : "negative",
+      },
+      {
+        label: "% Change",
+        value: formatPercent(change.percent),
+        changeType: change.percent >= 0 ? "positive" : "negative",
+      }
+    );
+  }
+
+  return tiles;
 }
 
 export function getDistinctFiscalYears(rows: BudgetRow[]): string[] {
@@ -87,7 +101,7 @@ export function getDistinctFiscalYears(rows: BudgetRow[]): string[] {
 
 export function detectCurrentAndPreviousYear(rows: BudgetRow[]): {
   currentYear: string;
-  previousYear: string;
+  previousYear: string | null;
   allYears: string[];
 } {
   const years = getDistinctFiscalYears(rows);
@@ -96,7 +110,7 @@ export function detectCurrentAndPreviousYear(rows: BudgetRow[]): {
   );
   const currentYear = budgetYears.length > 0 ? budgetYears[budgetYears.length - 1] : years[years.length - 1] || "2026";
   const prevIndex = years.indexOf(currentYear) - 1;
-  const previousYear = prevIndex >= 0 ? years[prevIndex] : years[0] || currentYear;
+  const previousYear = prevIndex >= 0 ? years[prevIndex] : null;
   return { currentYear, previousYear, allYears: years };
 }
 

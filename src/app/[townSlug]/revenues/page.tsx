@@ -43,16 +43,19 @@ export default async function RevenuesPage({
   const current = allRows.filter(
     (r) => r.fiscalYear === currentYear && r.amountType === "budget"
   );
-  const prev = allRows.filter(
-    (r) =>
-      r.fiscalYear === previousYear &&
-      (r.amountType === "actual" || r.amountType === "budget")
-  );
+  const prev = previousYear
+    ? allRows.filter(
+        (r) =>
+          r.fiscalYear === previousYear &&
+          (r.amountType === "actual" || r.amountType === "budget")
+      )
+    : [];
 
+  const hasPriorYear = previousYear !== null && prev.length > 0;
   const tiles = buildRevenueSummaryTiles(current, prev);
   const byCategory = toChartData(groupAndSum(current, "category1"));
 
-  const years = allYears.length > 0 ? allYears : [previousYear, currentYear];
+  const years = allYears.length > 0 ? allYears : [currentYear];
   const categories = [...new Set(current.map((r) => r.category1 || "Other"))];
   const trendSeries = categories.slice(0, 8).map((cat) => ({
     label: cat,
@@ -166,6 +169,9 @@ export default async function RevenuesPage({
           taxes. State aid (Chapter 70 for schools, unrestricted government aid)
           is the second largest. Local receipts include things like motor
           vehicle excise tax, permits, and fees.
+          {hasPriorYear
+            ? " The summary tiles above show totals and how revenue changed from last year."
+            : " The summary tiles above show totals and the top revenue source."}
         </p>
       </div>
 

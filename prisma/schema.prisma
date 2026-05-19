@@ -110,6 +110,9 @@ model BudgetRow {
   purpose        String?
   fundingSource  String?
 
+  customLabel    String?
+  customValue    String?
+
   createdAt      DateTime @default(now())
 
   @@index([townId, dataCategory])

@@ -46,16 +46,19 @@ export default async function ExpensesPage({
   const current = allRows.filter(
     (r) => r.fiscalYear === currentYear && r.amountType === "budget"
   );
-  const prev = allRows.filter(
-    (r) =>
-      r.fiscalYear === prevYear &&
-      (r.amountType === "budget" || r.amountType === "actual")
-  );
+  const prev = prevYear
+    ? allRows.filter(
+        (r) =>
+          r.fiscalYear === prevYear &&
+          (r.amountType === "budget" || r.amountType === "actual")
+      )
+    : [];
 
+  const hasPriorYear = prevYear !== null && prev.length > 0;
   const tiles = buildExpenseSummaryTiles(current, prev);
   const byFunction = toChartData(groupAndSum(current, "functionArea"));
 
-  const years = allYears.length > 0 ? allYears : [prevYear, currentYear];
+  const years = allYears.length > 0 ? allYears : [currentYear];
   const functions = [...new Set(current.map((r) => r.functionArea || "Other"))];
   const trendSeries = functions.slice(0, 8).map((fn) => ({
     label: fn,
@@ -211,9 +214,12 @@ export default async function ExpensesPage({
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
         <p className="text-sm text-amber-800 leading-relaxed">
           <strong>How to read this page:</strong> The summary tiles show the big
-          picture — total spending, the largest area, and how it changed from
-          last year. The charts below break spending down visually. Scroll
-          further to see every line item in a searchable table. Look for the{" "}
+          picture — total spending
+          {hasPriorYear
+            ? ", the largest area, and how it changed from last year"
+            : " and the largest area"}
+          . The charts below break spending down visually. Scroll further to see
+          every line item in a searchable table. Look for the{" "}
           <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-300 text-gray-600 text-[10px] font-bold">
             ?
           </span>{" "}

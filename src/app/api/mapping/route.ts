@@ -54,6 +54,21 @@ export async function POST(request: Request) {
   // Delete existing rows for this upload
   await prisma.budgetRow.deleteMany({ where: { uploadId } });
 
+  // Deduplicate: remove existing rows from OTHER uploads that share the same
+  // town + category + fiscal year(s) to prevent duplication when the same
+  // year is uploaded incrementally.
+  if (normalized.length > 0) {
+    const incomingYears = [...new Set(normalized.map((r) => r.fiscalYear))];
+    await prisma.budgetRow.deleteMany({
+      where: {
+        townId: upload.townId,
+        dataCategory: upload.dataCategory,
+        fiscalYear: { in: incomingYears },
+        uploadId: { not: uploadId },
+      },
+    });
+  }
+
   // Insert normalized rows
   if (normalized.length > 0) {
     await prisma.budgetRow.createMany({

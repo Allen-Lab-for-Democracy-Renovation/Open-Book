@@ -119,7 +119,7 @@ export default function LoginPage() {
           <p className="text-xs text-gray-500 leading-relaxed">
             If this is your first time, you&apos;ll need to{" "}
             <Link href="/admin/register" className="underline">create an account</Link>{" "}
-            first. You&apos;ll need the setup key from your .env file.
+            first.
           </p>
         </div>
 

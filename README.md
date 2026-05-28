@@ -111,7 +111,7 @@ The admin header has a **Preview** link that opens your public portal (`/[townSl
 - Capital project listings with funding sources
 - Searchable line-item tables with CSV export
 - Printable budget book generation
-- FAQ page with expandable answers and direct email link to the town's finance office
+- FAQ page with expandable answers
 - Supporting documents and external links
 - Plain-language tooltips on budget items
 
@@ -134,110 +134,35 @@ The admin header has a **Preview** link that opens your public portal (`/[townSl
 
 ## IT Onboarding
 
-This section is for municipal IT staff deploying OpenBook for their town. You should be comfortable with a command line, but you do not need to write code.
+For the full step-by-step deployment guide, see the **[IT Department Guide on the wiki](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/wiki/Guide-for-IT-Departments)**.
 
-### Hosting Options
+### Path A — Vercel (Recommended)
 
-**Option A: Vercel (recommended for simplicity)**
+1. Fork this repository to your town's GitHub account
+2. Create a free account at [vercel.com](https://vercel.com)
+3. Click **Add New Project**, import your fork, and click **Deploy**
 
-1. Create a free account at [vercel.com](https://vercel.com)
-2. Fork or clone this repository to your town's GitHub account
-3. In Vercel, click **Add New Project** and import the repository
-4. Set the `DATABASE_URL` environment variable to `file:./dev.db`
-5. Click **Deploy**
+Vercel builds the app, creates the database, and gives you a live URL. No environment variables needed — `DATABASE_URL` defaults to `file:./dev.db`. Connect a custom domain (e.g., `budget.yourtown.gov`) in Vercel's domain settings. Updates deploy automatically when you push to your fork.
 
-Vercel gives you a URL like `openbook-abc123.vercel.app`. You can connect a custom domain afterward.
+### Path B — Self-Hosted
 
-**Option B: Self-hosted server**
-
-Any server with Node.js 20+ works. Clone the repo, then:
+Any server with Node.js 20+ works:
 
 ```bash
+git clone https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book.git
+cd Open-Book
 npm install
 npm run build
 npm start
 ```
 
-The app runs on port 3000. Place it behind a reverse proxy (nginx, Apache, Caddy) for SSL on port 443. Use `pm2` to keep it running:
+The app runs on port 3000. Use `pm2` to keep it running, a reverse proxy (nginx) for SSL, and Certbot for a free certificate. No `.env` file needed — `DATABASE_URL` defaults to `file:./dev.db`.
 
-```bash
-npm install -g pm2
-pm2 start "npm start" --name openbook
-pm2 save
-pm2 startup
-```
+### After Deploying
 
-**Option C: Railway or Render**
-
-Both are cloud platforms that run Node.js apps with minimal config. Set `DATABASE_URL=file:./dev.db` as an environment variable, and configure:
-- Build command: `npm install && npm run build`
-- Start command: `npm start`
-
-Attach a persistent volume mounted at the `prisma/` directory so the database survives restarts.
-
-### Custom Domain Setup
-
-Create a subdomain like `budget.yourtown.gov`:
-
-1. Add a **CNAME record** in your DNS provider pointing to your hosting platform's URL
-2. Add the custom domain in your platform's settings (Vercel: Settings → Domains; Railway/Render: similar)
-3. SSL certificates are provisioned automatically on all three platforms
-
-For self-hosted servers, use Certbot for a free SSL certificate:
-
-```bash
-sudo certbot --nginx -d budget.yourtown.gov
-```
-
-### First Admin Account
-
-Navigate to `/admin/register`. Enter a name, email, and password. The first person to register becomes the admin — after that, this page is locked. Additional admin access is managed through the **Transfer** tab.
-
-### User Management
-
-**Staff invites:** Admins invite staff from the **Users** tab by entering an email address. A unique single-use invite link is generated and copied to the clipboard. Send it to the staff member however you prefer. They click it, fill in their name/department/password, and their account is created. Staff cannot self-register.
-
-**Email domain restrictions:** Optionally restrict invites to specific email domains (e.g. `yourtown.gov`) from the Users tab.
-
-**Password resets:** If a staff member forgets their password, generate a one-time reset link from the Users tab.
-
-### Security
-
-- Passwords are hashed with scrypt (never stored in plaintext)
-- Sessions use HTTP-only cookies with 7-day expiration
-- Staff registration requires a single-use invite token from an admin
-- No external services or third-party APIs — all data stays on your server
-
-### Backups
-
-The database is a single SQLite file (`dev.db`). Back it up by copying the file:
-
-```bash
-cp dev.db dev.db.backup-$(date +%Y%m%d)
-```
-
-### Updating
-
-For Vercel: push to your GitHub repo and it redeploys automatically.
-
-For self-hosted:
-
-```bash
-git pull origin main
-npm install
-npm run build
-pm2 restart openbook
-```
-
-Database migrations run automatically during the build step.
-
-### Troubleshooting
-
-- **Database errors after updating:** Run `npx prisma migrate deploy` manually, then restart.
-- **Staff member can't log in:** Check the Users tab — create a new invite or reset their password.
-- **Transfer admin access:** Use the Transfer tab in the admin panel — no IT involvement needed.
-
-For the full step-by-step guide with additional detail, see the [GitHub Wiki](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/wiki/Guide-for-IT-Departments).
+1. Go to `/admin/register` to create the first admin account (locks after first use)
+2. Hand the login to your town manager — they handle everything from the admin panel
+3. Back up the database by copying the `dev.db` file
 
 ## Tech Stack
 

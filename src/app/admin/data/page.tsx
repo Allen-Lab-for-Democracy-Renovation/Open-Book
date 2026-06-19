@@ -180,7 +180,9 @@ export default function DataManagementPage() {
           becomes part of your resident-facing portal. You can upload multiple
           files (e.g., one for expenses, one for revenues) and they&apos;ll all
           appear on your portal. If you upload a corrected version, delete the
-          old one first.
+          old one first. Use <strong>Download</strong> to export an upload&apos;s
+          saved data as a CSV (rebuilt from the stored rows, so column names are
+          normalized rather than an exact copy of the original file).
         </p>
       </HelpBox>
 
@@ -233,6 +235,15 @@ export default function DataManagementPage() {
                       {new Date(upload.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 text-right space-x-3">
+                      {upload.rowCount > 0 && (
+                        <a
+                          href={`/api/uploads/${upload.id}/download`}
+                          className="text-gray-600 hover:text-gray-900 text-sm"
+                          aria-label={`Download data for ${upload.fileName}`}
+                        >
+                          Download
+                        </a>
+                      )}
                       <button
                         onClick={() => handleDownload(upload)}
                         disabled={downloading === upload.id}

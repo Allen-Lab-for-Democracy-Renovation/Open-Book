@@ -1,16 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { statSync } from "fs";
+import { readdirSync, statSync } from "fs";
 import { join } from "path";
 
 export async function GET() {
-  const dbPath = join(process.cwd(), "dev.db");
-  let dbSize = 0;
-  try {
-    dbSize = statSync(dbPath).size;
-  } catch {
-    // DB file might not exist
-  }
+  const [databaseSize] = await prisma.$queryRaw<{ size: bigint }[]>`
+    SELECT pg_database_size(current_database())::bigint AS size
+  `;
+  const dbSize = Number(databaseSize?.size || 0);
 
   const uploadCount = await prisma.upload.count();
   const rowCount = await prisma.budgetRow.count();
@@ -20,20 +17,19 @@ export async function GET() {
   const uploadsDir = join(process.cwd(), "public", "uploads");
   let uploadsDirSize = 0;
   try {
-    const { readdirSync, statSync: statS } = require("fs");
     const files = readdirSync(uploadsDir);
     for (const f of files) {
       try {
-        uploadsDirSize += statS(join(uploadsDir, f)).size;
+        uploadsDirSize += statSync(join(uploadsDir, f)).size;
       } catch {
-        // skip unreadable files
+        continue;
       }
     }
   } catch {
-    // dir might not exist
+    uploadsDirSize = 0;
   }
 
-  const FREE_TIER_LIMIT = 100 * 1024 * 1024; // 100MB
+  const FREE_TIER_LIMIT = 100 * 1024 * 1024;
   const totalUsed = dbSize + uploadsDirSize;
 
   return NextResponse.json({

@@ -1,75 +1,58 @@
-# OpenBook Self-Hosting Guide
+# OpenBook Setup Guide
 
-OpenBook is a self-hosted municipal budget transparency portal. Each town deploys its own instance.
+OpenBook is a municipal budget transparency portal. Each town deploys its own instance with a Postgres database.
 
 ## Prerequisites
 
-- Node.js 18+ (recommended: 20 LTS)
+- Node.js 20 LTS or later
 - npm 9+
+- A Postgres database connection string
 
-## Quick Start
+For testing, a free Postgres database from Vercel Storage, Neon, or Supabase is enough.
 
-### 1. Clone the repository
+## Local Setup
 
 ```bash
-git clone https://github.com/your-org/openbook.git
-cd openbook
+git clone https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book.git
+cd Open-Book
+npm install
+cp .env.example .env.local
 ```
 
-### 2. Install and start
+Edit `.env.local` and set `DATABASE_URL` to your Postgres connection string. If your provider gives you both pooled and direct URLs, set `DATABASE_URL` to the pooled runtime URL and `DIRECT_URL` to the direct URL.
 
 ```bash
-npm install
 npm run dev
 ```
 
-That's it. `npm install` generates the Prisma client, and `npm run dev` automatically creates the SQLite database, applies all migrations, and starts the server.
+Visit `http://localhost:3000/admin/register` to create the first admin account. The first account becomes the admin; after that, registration is locked unless an admin is logged in.
 
-Visit `http://localhost:3000/admin/register` to create your admin account. The first person to register becomes the admin — no setup key or `.env` file required. After the first admin account exists, registration is locked unless an admin is logged in.
+## Vercel Deployment
 
-## First-Time Setup
+1. Fork this repository to the town's GitHub account.
+2. Create a Postgres database through Vercel Storage, Neon, or Supabase.
+3. In Vercel, click **Add New Project** and import the forked repository.
+4. Add environment variables:
 
-1. Go to `/admin/register` and create an admin account (the first account becomes admin automatically).
-2. After logging in, go to `/admin/setup` to configure your town (name, slug, color, contact email).
-3. Go to `/admin/upload` to upload your budget CSV or Excel files.
-4. Map columns and confirm. Your portal is now live at `/{your-town-slug}`.
+| Variable       | Required | Description                                                                 |
+| -------------- | -------- | --------------------------------------------------------------------------- |
+| `DATABASE_URL` | Yes      | Postgres connection string used by the running app                          |
+| `DIRECT_URL`   | No       | Direct Postgres connection string for migrations when using pooled databases |
 
-## Production Deployment
+5. Click **Deploy**.
+6. Visit `https://your-vercel-url/admin/register` and create the first admin account.
 
-### Vercel
+No manual database-provider migration or Prisma schema edit is required.
 
-1. Fork this repository
-2. Import the project in Vercel
-3. Set `DATABASE_URL` if using a non-default database path
-4. Deploy
+## Custom Domain
 
-Note: SQLite works for single-instance deployments. For Vercel, the database file must be in a persistent storage location. Consider using Vercel's Blob storage or switching to PostgreSQL for production.
+For municipal deployments, use a `.gov` subdomain such as `budget.yourtown.gov`.
 
-### VPS / Docker
+1. Add the domain in Vercel under **Settings > Domains**.
+2. Create the DNS record Vercel shows, usually a CNAME pointing to `cname.vercel-dns.com`.
+3. Wait for DNS propagation. Vercel provisions HTTPS automatically.
 
-```bash
-# Build for production
-npm run build
-
-# Start the production server
-npm start
-```
-
-The app runs on port 3000 by default. Use a reverse proxy (nginx, Caddy) for HTTPS.
-
-### Custom Domain
-
-For municipal deployments, we recommend a `.gov` subdomain:
-
-1. Set up a CNAME record: `budget.yourtown.gov` -> your deployment host
-2. Configure HTTPS via your reverse proxy or hosting platform
-3. Update the portal's URL slug to match your subdomain expectations
-
-## Environment Variables
-
-| Variable      | Required | Description                                                        |
-|---------------|----------|--------------------------------------------------------------------|
-| DATABASE_URL  | No       | SQLite database file path (defaults to `file:./dev.db` if not set) |
+If a website vendor manages the town site, ask them to create the CNAME record.
 
 ## Seeding Sample Data
 
@@ -79,10 +62,12 @@ To load sample data for testing:
 npm run seed
 ```
 
-This loads the sample CSV files from `sample-data/` into the database.
+This loads the sample CSV files from `sample-data/` into the configured Postgres database.
 
 ## Troubleshooting
 
-**Database errors**: Try deleting `dev.db` and running `npm run dev` again. The database will be recreated automatically from the migrations.
+**Admin registration fails or shows a server error**: confirm `DATABASE_URL` is set in Vercel for the current environment, redeploy, and check the Vercel build/runtime logs for migration errors.
 
-**Port conflicts**: Use `npm run dev -- --port 3001` to run on a different port.
+**Migration errors with Neon or Supabase**: add `DIRECT_URL` using the provider's direct connection string, then redeploy.
+
+**Port conflicts locally**: use `npm run dev -- --port 3001` to run on a different port.

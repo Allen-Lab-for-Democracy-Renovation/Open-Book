@@ -30,7 +30,7 @@ This part is a complete walk-through from a fresh computer to a running OpenBook
 
 ## Before you begin: what you need on your computer
 
-You need two things installed before OpenBook can run. Both are free, official, and safe to install.
+You need a few things before OpenBook can run. They are free, official, and safe to install.
 
 ### 1. Node.js (version 18 or newer; 20 LTS recommended)
 
@@ -69,12 +69,20 @@ When the terminal opens you'll see a blinking prompt. That's where you type the 
 
 If you want to install Git: go to <https://git-scm.com/downloads> and run the installer for your operating system.
 
+### 4. A Postgres database connection string
+
+**What it is.** Postgres is the database OpenBook uses to store town settings, uploaded budget rows, staff invites, and admin accounts. You can run Postgres on your own computer, but for testing it is usually easiest to create a free hosted database through Vercel Storage, Neon, or Supabase.
+
+After creating the database, copy its connection string. It usually starts with `postgresql://`. You will paste it into `.env.local` in the steps below.
+
 ## Quick start
 
-If you already have Node.js installed and you have the project files on your computer, here are the three commands:
+If you already have Node.js installed and you have the project files on your computer, here are the commands:
 
 ```bash
 npm install
+cp .env.example .env.local
+# Edit .env.local with your Postgres DATABASE_URL
 npm run dev
 ```
 
@@ -119,7 +127,19 @@ You will see a lot of output scroll by — that's normal. As long as the final l
 
 **Behind the scenes**, `npm install` also runs a one-time setup step called `prisma generate` that prepares the database connection code. You don't need to do anything for this; it happens automatically.
 
-### Step 3: Start OpenBook
+### Step 3: Configure the database
+
+OpenBook reads its database settings from a local file named `.env.local`. Create that file by copying the example:
+
+```bash
+cp .env.example .env.local
+```
+
+Open `.env.local` in a text editor and replace the sample `DATABASE_URL` value with your Postgres connection string.
+
+If your database provider gives you both a pooled connection string and a direct connection string, use the pooled string for `DATABASE_URL` and the direct string for `DIRECT_URL`.
+
+### Step 4: Start OpenBook
 
 Type:
 
@@ -129,7 +149,7 @@ npm run dev
 
 What this does:
 
-1. Creates a small database file (`dev.db`) in the project folder if one doesn't exist. The database is just a single file on your computer; nothing is sent over the internet.
+1. Connects to the Postgres database from `.env.local`.
 2. Applies all of OpenBook's data-structure setup ("migrations") to that database.
 3. Starts the web server.
 
@@ -137,9 +157,7 @@ After a few seconds you'll see a message like `Ready in 2.1s` and a URL: <http:/
 
 **Important: leave this terminal window open.** As long as `npm run dev` is running, OpenBook is running. If you close the window or press `Ctrl + C` in it, OpenBook stops. To start it again later, open a new terminal, navigate to the project folder with `cd`, and run `npm run dev` again.
 
-You do **not** need to set up a `.env` file or configure environment variables. OpenBook has preexisting default settings.
-
-### Step 4 (optional): Load sample data
+### Step 5 (optional): Load sample data
 
 OpenBook starts empty, so the public portal won't have anything to show until you upload data. If you want to see what a populated portal looks like immediately, you can load a small set of pretend data:
 
@@ -268,10 +286,13 @@ For the full step-by-step deployment guide, see the **[IT Department Guide on th
 ### Path A — Vercel (Recommended)
 
 1. Fork this repository to your town's GitHub account
-2. Create a free account at [vercel.com](https://vercel.com)
-3. Click **Add New Project**, import your fork, and click **Deploy**
+2. Create a Postgres database through Vercel Storage, Neon, or Supabase
+3. Create a free account at [vercel.com](https://vercel.com)
+4. Click **Add New Project** and import your fork
+5. Add the database connection strings in Vercel environment variables
+6. Click **Deploy**
 
-Vercel builds the app, creates the database, and gives you a live URL. No environment variables needed — `DATABASE_URL` defaults to `file:./dev.db`. Connect a custom domain (e.g., `budget.yourtown.gov`) in Vercel's domain settings. Updates deploy automatically when you push to your fork.
+Vercel builds the app, applies migrations, and gives you a live URL. Connect a custom domain (e.g. `budget.yourtown.gov`) in Vercel's domain settings. Updates deploy automatically when you push to your fork.
 
 ### Path B — Self-Hosted
 
@@ -281,17 +302,19 @@ Any server with Node.js 20+ works:
 git clone https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book.git
 cd Open-Book
 npm install
+cp .env.example .env.local
+# Edit .env.local with your Postgres DATABASE_URL
 npm run build
 npm start
 ```
 
-The app runs on port 3000. Use `pm2` to keep it running, a reverse proxy (nginx) for SSL, and Certbot for a free certificate. No `.env` file needed — `DATABASE_URL` defaults to `file:./dev.db`.
+The app runs on port 3000. Use `pm2` to keep it running, a reverse proxy (nginx) for SSL, and Certbot for a free certificate.
 
 ### After Deploying
 
 1. Go to `/admin/register` to create the first admin account (locks after first use)
 2. Hand the login to your town manager — they handle everything from the admin panel
-3. Back up the database by copying the `dev.db` file
+3. Back up the Postgres database using your database provider's backup tools
 
 ---
 
@@ -302,7 +325,7 @@ You do not need any of this section to use OpenBook. It's here for anyone who wa
 ## Tech Stack
 
 - **Framework**: Next.js 16 (App Router, Turbopack)
-- **Database**: SQLite via Prisma 7 with the better-sqlite3 adapter
+- **Database**: Postgres via Prisma 7 with the pg adapter
 - **Styling**: Tailwind CSS v4
 - **Charts**: Chart.js + react-chartjs-2
 - **Data import**: PapaParse (CSV), SheetJS (Excel)
@@ -310,9 +333,10 @@ You do not need any of this section to use OpenBook. It's here for anyone who wa
 
 ## Environment Variables
 
-| Variable       | Required | Description                                                        |
-| -------------- | -------- | ------------------------------------------------------------------ |
-| `DATABASE_URL` | No       | SQLite database file path (defaults to `file:./dev.db` if not set) |
+| Variable       | Required | Description                                                                 |
+| -------------- | -------- | --------------------------------------------------------------------------- |
+| `DATABASE_URL` | Yes      | Postgres connection string used by the running app                          |
+| `DIRECT_URL`   | No       | Direct Postgres connection string for migrations when using pooled databases |
 
 ## Project Structure
 
@@ -340,9 +364,13 @@ prisma/
 
 # Troubleshooting
 
+**Admin registration fails on a fresh deploy** — check that `DATABASE_URL` is set in the hosting environment, then redeploy so `prisma migrate deploy` can create the tables before the app starts.
+
+**Using Neon, Supabase, or another pooled database** — set `DATABASE_URL` to the pooled runtime URL and `DIRECT_URL` to the direct connection URL. Prisma uses `DIRECT_URL` for migrations when it is present.
+
 **"`command not found: npm`" or "`command not found: node`"** — Node.js isn't installed or your terminal doesn't see it. Re-run the installer from <https://nodejs.org> and then **close and reopen** your terminal window before trying again.
 
-**"Dev login failed" or 500 errors after pulling changes** — usually the local database is out of sync with the latest data structure. Delete the file `dev.db` from the project folder and run `npm run dev` again. The database will be recreated automatically from the migrations. (Note: this deletes any data you've uploaded locally.)
+**"Dev login failed" or 500 errors after pulling changes** — usually the configured Postgres database is out of sync with the latest data structure. Confirm `DATABASE_URL` is correct, then run `npm run dev` again so migrations can apply.
 
 **0 rows after uploading** — check that the column you expect to be the dollar amount is mapped to **Fiscal Year Amount**, with the **Fiscal Year** field filled in. Without those, no rows are produced.
 
@@ -357,7 +385,7 @@ prisma/
 # Glossary
 
 - **CSV** — "Comma-Separated Values." A plain-text spreadsheet format. Any spreadsheet program can save as CSV via "File → Save As."
-- **Database** — a structured file (or set of files) that stores your data. OpenBook uses a single file called `dev.db` on your computer.
+- **Database** — a structured place where OpenBook stores your data. OpenBook uses Postgres.
 - **Dependencies / packages** — small reusable pieces of code that OpenBook is built on top of. Downloaded automatically by `npm install`.
 - **Git** — a tool for downloading and tracking versions of code. Optional for using OpenBook; required if you want to contribute changes.
 - **localhost** — your own computer, addressed by web browsers as `http://localhost`. When you visit <http://localhost:3000>, the browser is talking to the OpenBook server running on the same machine.

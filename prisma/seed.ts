@@ -1,13 +1,7 @@
-import { PrismaClient } from "../src/generated/prisma/client.js";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { prisma } from "../src/lib/db.js";
 import * as fs from "fs";
 import * as path from "path";
 import Papa from "papaparse";
-
-const adapter = new PrismaBetterSqlite3({
-  url: "file:./dev.db",
-});
-const prisma = new PrismaClient({ adapter });
 
 function parseCSV(filePath: string): Record<string, string>[] {
   const content = fs.readFileSync(filePath, "utf-8");

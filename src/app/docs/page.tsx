@@ -28,8 +28,9 @@ export default function DocsPage() {
             <div>
               <h2 className="text-lg font-medium mt-8 mb-3">Prerequisites</h2>
               <ul className="list-disc list-inside text-gray-600 space-y-1">
-                <li>Node.js 18+ (recommended: 20 LTS)</li>
+                <li>Node.js 20 LTS or later</li>
                 <li>npm 9+</li>
+                <li>A Postgres database connection string</li>
               </ul>
             </div>
 
@@ -49,13 +50,22 @@ export default function DocsPage() {
                   </pre>
                 </li>
                 <li>
+                  <strong>Set environment variables</strong>
+                  <pre className="mt-1 bg-gray-50 rounded-lg p-3 text-sm overflow-x-auto">
+                    <code>cp .env.example .env.local{"\n"}# Edit .env.local with your Postgres DATABASE_URL</code>
+                  </pre>
+                  <p className="mt-1 text-sm text-gray-500">
+                    A local Postgres database works, or you can use a free hosted
+                    database from Vercel Storage, Neon, or Supabase.
+                  </p>
+                </li>
+                <li>
                   <strong>Start the development server</strong>
                   <pre className="mt-1 bg-gray-50 rounded-lg p-3 text-sm overflow-x-auto">
                     <code>npm run dev</code>
                   </pre>
                   <p className="mt-1 text-sm text-gray-500">
-                    The database is created and migrations are applied automatically.
-                    No <code className="bg-gray-100 px-1 rounded">.env</code> file is required for local development.
+                    Migrations are applied automatically before the server starts.
                   </p>
                 </li>
               </ol>
@@ -95,8 +105,13 @@ export default function DocsPage() {
                   <tbody>
                     <tr className="border-t border-gray-200">
                       <td className="px-4 py-2"><code>DATABASE_URL</code></td>
+                      <td className="px-4 py-2">Yes</td>
+                      <td className="px-4 py-2 text-gray-600">Postgres connection string used by the running app</td>
+                    </tr>
+                    <tr className="border-t border-gray-200">
+                      <td className="px-4 py-2"><code>DIRECT_URL</code></td>
                       <td className="px-4 py-2">No</td>
-                      <td className="px-4 py-2 text-gray-600">SQLite database file path (defaults to <code>file:./dev.db</code>)</td>
+                      <td className="px-4 py-2 text-gray-600">Direct Postgres connection string for migrations when using pooled databases</td>
                     </tr>
                   </tbody>
                 </table>
@@ -113,9 +128,8 @@ export default function DocsPage() {
 
           <div className="prose prose-sm max-w-none space-y-6">
             <p className="text-gray-600">
-              OpenBook runs locally with SQLite out of the box, but for a public-facing
-              portal you&apos;ll want to deploy it to a hosting provider with a production
-              database. This section walks through the recommended path.
+              OpenBook uses Postgres in local and hosted environments. This section
+              walks through the recommended Vercel deployment path.
             </p>
 
             <div>
@@ -144,6 +158,13 @@ export default function DocsPage() {
                   </p>
                 </li>
                 <li>
+                  <strong>Create a Postgres database</strong>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Use Vercel Storage, Neon, or Supabase. Their free tiers are enough
+                    for testing one town&apos;s budget portal.
+                  </p>
+                </li>
+                <li>
                   <strong>Add environment variables</strong>
                   <p className="mt-1 text-sm text-gray-500">
                     In the Vercel project settings, go to <strong>Environment Variables</strong> and add:
@@ -160,17 +181,23 @@ export default function DocsPage() {
                         <tr className="border-t border-gray-200">
                           <td className="px-4 py-2"><code>DATABASE_URL</code></td>
                           <td className="px-4 py-2 text-gray-600">
-                            Your Postgres connection string (see Database Migration below)
+                            Your Postgres runtime connection string
+                          </td>
+                        </tr>
+                        <tr className="border-t border-gray-200">
+                          <td className="px-4 py-2"><code>DIRECT_URL</code></td>
+                          <td className="px-4 py-2 text-gray-600">
+                            Optional direct connection string for migrations
                           </td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
                   <p className="mt-2 text-sm text-gray-500">
-                    For the database, grab a free Postgres instance from{" "}
-                    <code className="bg-gray-100 px-1 rounded">neon.tech</code> or{" "}
-                    <code className="bg-gray-100 px-1 rounded">supabase.com</code>. Both offer
-                    free tiers that are more than enough for a single town&apos;s budget data.
+                    If the provider gives you both pooled and direct URLs, use the pooled
+                    URL for <code className="bg-gray-100 px-1 rounded">DATABASE_URL</code>{" "}
+                    and the direct URL for{" "}
+                    <code className="bg-gray-100 px-1 rounded">DIRECT_URL</code>.
                   </p>
                 </li>
                 <li>
@@ -183,56 +210,6 @@ export default function DocsPage() {
                   </p>
                 </li>
               </ol>
-            </div>
-
-            <div>
-              <h2 className="text-lg font-medium mt-8 mb-3">Database Migration (SQLite to Postgres)</h2>
-              <p className="text-gray-600 mb-3">
-                Locally, OpenBook uses SQLite. For production you need to switch to Postgres.
-                Here&apos;s how:
-              </p>
-              <ol className="list-decimal list-inside text-gray-600 space-y-3">
-                <li>
-                  <strong>Get a Postgres connection string</strong>
-                  <p className="mt-1 text-sm text-gray-500">
-                    It looks something like:{" "}
-                    <code className="bg-gray-100 px-1 rounded">
-                      postgresql://user:password@host:5432/dbname
-                    </code>
-                  </p>
-                </li>
-                <li>
-                  <strong>Update the Prisma schema</strong>
-                  <p className="mt-1 text-sm text-gray-500">
-                    In <code className="bg-gray-100 px-1 rounded">prisma/schema.prisma</code>,
-                    change the datasource provider:
-                  </p>
-                  <pre className="mt-1 bg-gray-50 rounded-lg p-3 text-sm overflow-x-auto">
-                    <code>{`datasource db {
-  provider = "postgresql"  // was "sqlite"
-  url      = env("DATABASE_URL")
-}`}</code>
-                  </pre>
-                </li>
-                <li>
-                  <strong>Set the environment variable</strong>
-                  <pre className="mt-1 bg-gray-50 rounded-lg p-3 text-sm overflow-x-auto">
-                    <code>DATABASE_URL=&quot;postgresql://user:password@host:5432/dbname&quot;</code>
-                  </pre>
-                </li>
-                <li>
-                  <strong>Run migrations</strong>
-                  <pre className="mt-1 bg-gray-50 rounded-lg p-3 text-sm overflow-x-auto">
-                    <code>npx prisma migrate dev</code>
-                  </pre>
-                </li>
-              </ol>
-              <p className="text-sm text-gray-500 mt-3">
-                <strong>Note:</strong> Your local SQLite data does not carry over when you switch
-                to Postgres. After migrating, re-upload your budget data through the admin panel.
-                The schema and tables are created by the migration — it&apos;s just the row data
-                that doesn&apos;t transfer.
-              </p>
             </div>
 
             <div>
@@ -294,8 +271,8 @@ export default function DocsPage() {
                 <h3 className="text-sm font-semibold text-gray-700 mb-2">What IT does:</h3>
                 <ul className="list-disc list-inside text-gray-600 space-y-1">
                   <li>Connect the forked repo to Vercel</li>
-                  <li>Set up a Postgres database (Neon or Supabase free tier)</li>
-                  <li>Add the <code className="bg-gray-100 px-1 rounded">DATABASE_URL</code> environment variable in Vercel</li>
+                  <li>Set up a Postgres database</li>
+                  <li>Add <code className="bg-gray-100 px-1 rounded">DATABASE_URL</code> and, if needed, <code className="bg-gray-100 px-1 rounded">DIRECT_URL</code> in Vercel</li>
                   <li>Point the subdomain (e.g., <code className="bg-gray-100 px-1 rounded">budget.townname.gov</code>) via CNAME</li>
                   <li>Verify the deployment is live and SSL is working</li>
                 </ul>
@@ -312,19 +289,13 @@ export default function DocsPage() {
                     Create a Vercel account and import the forked repo
                   </li>
                   <li>
-                    Provision a Postgres database (Neon:{" "}
-                    <code className="bg-gray-100 px-1 rounded">neon.tech</code>, Supabase:{" "}
-                    <code className="bg-gray-100 px-1 rounded">supabase.com</code>)
+                    Provision a Postgres database through Vercel Storage, Neon, or Supabase
                   </li>
                   <li>
-                    Copy the connection string and add it as{" "}
+                    Add the runtime connection string as{" "}
                     <code className="bg-gray-100 px-1 rounded">DATABASE_URL</code> in Vercel
-                    environment variables
-                  </li>
-                  <li>
-                    Update <code className="bg-gray-100 px-1 rounded">prisma/schema.prisma</code>{" "}
-                    provider to <code className="bg-gray-100 px-1 rounded">&quot;postgresql&quot;</code>{" "}
-                    and commit the change
+                    environment variables. If the provider gives a direct connection string,
+                    add it as <code className="bg-gray-100 px-1 rounded">DIRECT_URL</code>.
                   </li>
                   <li>Deploy — Vercel builds automatically on push</li>
                   <li>
@@ -368,9 +339,9 @@ npm start`}</code>
                 </li>
               </ul>
               <p className="text-sm text-gray-500 mt-3">
-                Regardless of hosting provider, the same database migration steps apply:
-                switch the Prisma provider to <code className="bg-gray-100 px-1 rounded">&quot;postgresql&quot;</code>,
-                set <code className="bg-gray-100 px-1 rounded">DATABASE_URL</code>, and run migrations.
+                Regardless of hosting provider, set{" "}
+                <code className="bg-gray-100 px-1 rounded">DATABASE_URL</code> before building.
+                The build command runs migrations automatically.
               </p>
             </div>
           </div>

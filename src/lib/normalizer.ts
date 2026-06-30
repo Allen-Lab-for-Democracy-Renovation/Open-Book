@@ -8,7 +8,6 @@ export function normalizeRows(
   const fieldMap = new Map<string, string>();
   const fyColumns: { sourceColumn: string; fiscalYear: string; amountType: string }[] = [];
   let fiscalYearColumn: string | null = null;
-  let amountColumn: string | null = null;
 
   for (const m of mappings) {
     if (m.targetField === "skip") continue;
@@ -91,7 +90,7 @@ function findAmountColumn(
   fieldMap: Map<string, string>
 ): string | null {
   const mapped = new Set(fieldMap.values());
-  for (const [key, value] of Object.entries(row)) {
+  for (const key of Object.keys(row)) {
     if (mapped.has(key)) continue;
     if (/amount/i.test(key) || /budget/i.test(key) || /actual/i.test(key)) {
       return key;

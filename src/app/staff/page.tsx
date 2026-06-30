@@ -38,12 +38,6 @@ export default async function StaffDashboardPage() {
       approved: "bg-green-100 text-green-800",
       denied: "bg-red-100 text-red-800",
     };
-    const labels: Record<string, string> = {
-      submitted: "Submitted",
-      under_review: "Under Review",
-      approved: "Approved",
-      denied: "Denied",
-    };
     return `inline-block px-2 py-0.5 rounded text-xs font-medium ${styles[status] || "bg-gray-100 text-gray-800"}`;
   };
 

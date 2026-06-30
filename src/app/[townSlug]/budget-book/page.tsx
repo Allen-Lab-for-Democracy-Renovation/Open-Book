@@ -48,7 +48,6 @@ export default async function BudgetBookPage({
 
   const expensesByFunction = groupAndSum(currentExpenses, "functionArea");
   const revenuesByCategory = groupAndSum(currentRevenues, "category1");
-  const capitalByDept = groupAndSum(currentCapital, "department");
 
   const expFnGroups = new Map<string, Map<string, typeof currentExpenses>>();
   for (const row of currentExpenses) {
@@ -87,6 +86,7 @@ export default async function BudgetBookPage({
         {/* Cover */}
         <div className="text-center mb-16">
           {town.logoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element -- Logos can be local uploads or arbitrary municipal URLs.
             <img
               src={town.logoUrl}
               alt={`${town.name} logo`}

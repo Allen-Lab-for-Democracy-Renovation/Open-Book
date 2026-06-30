@@ -106,8 +106,8 @@
   --color-yellow-700: oklch(0.48 0.12 85);
 
   /* Fonts */
-  --font-display: "Bricolage Grotesque", system-ui, -apple-system, sans-serif;
-  --font-sans: "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-bricolage-grotesque), system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-atkinson-hyperlegible), system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 

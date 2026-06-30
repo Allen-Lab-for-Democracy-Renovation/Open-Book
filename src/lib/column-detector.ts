@@ -1,4 +1,4 @@
-import type { DetectedMapping, DataCategory } from "@/types";
+import type { DetectedMapping } from "@/types";
 
 interface DetectionRule {
   patterns: RegExp[];
@@ -89,10 +89,7 @@ function matchFYAmount(
   return null;
 }
 
-export function detectColumns(
-  headers: string[],
-  _category: DataCategory
-): DetectedMapping[] {
+export function detectColumns(headers: string[]): DetectedMapping[] {
   const mappings: DetectedMapping[] = [];
   const usedFields = new Set<string>();
 

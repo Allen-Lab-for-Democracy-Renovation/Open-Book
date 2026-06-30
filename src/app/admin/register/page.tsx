@@ -110,6 +110,10 @@ export default function RegisterPage() {
           <div className="flex gap-2">
             <Link
               href="/admin/setup"
+              onClick={(e) => {
+                e.preventDefault();
+                window.location.assign("/admin/setup");
+              }}
               className="flex-1 text-center px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors"
             >
               Continue to Setup

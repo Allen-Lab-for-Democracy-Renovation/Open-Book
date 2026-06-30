@@ -68,6 +68,7 @@ export default async function HomePage() {
                 >
                   <div className="flex items-center gap-3">
                     {town.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- Logos can be local uploads or arbitrary municipal URLs.
                       <img
                         src={town.logoUrl}
                         alt={`${town.name} logo`}

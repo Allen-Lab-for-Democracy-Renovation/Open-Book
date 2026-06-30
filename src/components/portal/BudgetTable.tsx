@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { formatCurrency } from "@/lib/format";
 import TooltipIcon from "./TooltipIcon";
 
@@ -103,9 +103,8 @@ export default function BudgetTable({
       ]
     : headers;
 
-  const effectiveRows = useMemo(() => {
-    if (!yearColumns) return rows;
-    return rows.map((r) => {
+  const effectiveRows = yearColumns
+    ? rows.map((r) => {
       const staticCells = r.cells.slice(0, staticHeaderCount);
       const yearCells = visibleYears.map((y) => {
         const i = allYears.indexOf(y);
@@ -128,28 +127,18 @@ export default function BudgetTable({
         }
       }
       return { ...r, cells: [...staticCells, ...yearCells, ...pctCells] };
-    });
-    // visibleYears identity is recomputed each render, so we depend on its
-    // stable string form (selectedYears) instead.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    rows,
-    yearColumns,
-    selectedYears.join("|"),
-    allYears.join("|"),
-    staticHeaderCount,
-  ]);
+    })
+    : rows;
 
-  const filtered = useMemo(() => {
-    if (!query) return effectiveRows;
-    const q = query.toLowerCase();
-    return effectiveRows.filter(
-      (r) =>
-        r.isGroup ||
-        r.isSubtotal ||
-        r.cells.some((c) => c != null && c.toString().toLowerCase().includes(q))
-    );
-  }, [effectiveRows, query]);
+  const q = query.toLowerCase();
+  const filtered = query
+    ? effectiveRows.filter(
+        (r) =>
+          r.isGroup ||
+          r.isSubtotal ||
+          r.cells.some((c) => c != null && c.toString().toLowerCase().includes(q))
+      )
+    : effectiveRows;
 
   const toggleYear = (year: string) => {
     setSelectedYears((prev) => {

@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDropzone } from "react-dropzone";
+import Link from "next/link";
 import type { DetectedMapping, DataCategory } from "@/types";
 import HelpBox from "@/components/admin/HelpBox";
 
@@ -429,9 +430,9 @@ export default function UploadPage() {
       <div>
         <p className="text-gray-500">
           Please{" "}
-          <a href="/admin/setup" className="text-blue-600 hover:underline">
+          <Link href="/admin/setup" className="text-blue-600 hover:underline">
             set up your town
-          </a>{" "}
+          </Link>{" "}
           first.
         </p>
       </div>

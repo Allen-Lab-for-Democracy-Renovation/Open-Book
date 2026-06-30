@@ -143,7 +143,7 @@ export async function POST(request: Request) {
   });
 
   // Auto-detect column mappings
-  const detectedMappings = detectColumns(headers, dataCategory);
+  const detectedMappings = detectColumns(headers);
 
   return NextResponse.json({
     uploadId: upload.id,

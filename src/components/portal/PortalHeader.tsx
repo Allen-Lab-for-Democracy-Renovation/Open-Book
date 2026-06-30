@@ -48,6 +48,7 @@ export default function PortalHeader({
             aria-label={`OpenBook ${townName} home`}
           >
             {logoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element -- Logos can be local uploads or arbitrary municipal URLs.
               <img
                 src={logoUrl}
                 alt={`${townName} logo`}

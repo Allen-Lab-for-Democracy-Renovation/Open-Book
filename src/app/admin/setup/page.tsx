@@ -220,27 +220,6 @@ export default function SetupPage() {
         </div>
 
         <div>
-          <label htmlFor="townSlug" className="block text-sm font-medium text-gray-700 mb-1">
-            URL Slug
-          </label>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">openbook.gov/</span>
-            <input
-              id="townSlug"
-              type="text"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-          <p className="text-xs text-gray-500 mt-1">
-            This is the web address for your portal. It&apos;s auto-generated from
-            your town name. Use lowercase letters and dashes only.
-          </p>
-        </div>
-
-        <div>
           <label htmlFor="brandColor" className="block text-sm font-medium text-gray-700 mb-1">
             Brand Color
           </label>
@@ -262,6 +241,7 @@ export default function SetupPage() {
           </label>
           {logoUrl && (
             <div className="mb-3 flex items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element -- Logos can be local uploads or arbitrary municipal URLs. */}
               <img
                 src={logoUrl}
                 alt="Current logo"

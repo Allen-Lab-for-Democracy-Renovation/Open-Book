@@ -16,7 +16,7 @@ export default function SummaryTiles({
 }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      {tiles.map((tile, i) => (
+      {tiles.map((tile) => (
         <div
           key={tile.label}
           className="bg-white border border-gray-200 rounded-lg p-4 sm:p-5 transition-colors duration-150 hover:border-gray-300"

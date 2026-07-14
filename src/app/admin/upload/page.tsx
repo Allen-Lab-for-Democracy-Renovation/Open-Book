@@ -108,10 +108,27 @@ const CATEGORY_REQUIREMENTS: Record<
     needsBudgetAmount: false,
   },
   reserves: {
-    required: [],
-    recommended: [],
+    required: [
+      {
+        field: "fyAmount",
+        label: "Fiscal Year Balance",
+        reason: "provides the published balance for each fiscal year",
+      },
+    ],
+    recommended: [
+      {
+        field: "fundName",
+        label: "Fund Name",
+        reason: "identifies each reserve or stabilization fund",
+      },
+      {
+        field: "category1",
+        label: "Category",
+        reason: "groups related funds in the reserve composition view",
+      },
+    ],
     needsBudgetAmount: false,
-    note: "Reserves data will be saved, but there's no public reserves page yet — nothing will render on the portal.",
+    note: "Published balances appear on the public Reserves page after the upload is saved.",
   },
 };
 
@@ -809,6 +826,7 @@ export default function UploadPage() {
                         >
                           <option value="actual">Actual</option>
                           <option value="budget">Budget</option>
+                          <option value="balance">Balance</option>
                         </select>
                       </div>
                     </div>

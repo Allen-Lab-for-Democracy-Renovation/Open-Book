@@ -53,7 +53,7 @@ const FIELD_RULES: Record<string, DetectionRule> = {
 };
 
 const FY_AMOUNT_PATTERN =
-  /(?:fy\s*)?(\d{2,4})\s*(actual|budget|approp|request|recommended|adopted|estimate)/i;
+  /(?:fy\s*)?(\d{2,4})\s*(actual|budget|approp|request|recommended|adopted|estimate|ending\s+balance|balance)/i;
 
 const FY_ONLY_PATTERN = /^(?:fy\s*)?(\d{4})$/i;
 
@@ -77,7 +77,13 @@ function matchFYAmount(
     if (year.length === 2) year = `20${year}`;
     const type = match[2].toLowerCase();
     const amountType =
-      type === "actual" ? "actual" : type === "budget" || type === "approp" || type === "adopted" ? "budget" : type;
+      type === "actual"
+        ? "actual"
+        : type === "budget" || type === "approp" || type === "adopted"
+          ? "budget"
+          : type.includes("balance")
+            ? "balance"
+            : type;
     return { fiscalYear: year, amountType, confidence: 0.95 };
   }
 

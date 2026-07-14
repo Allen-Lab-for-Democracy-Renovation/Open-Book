@@ -209,7 +209,7 @@ Each category has its own required fields:
 | Expenses         | Function Area, Fiscal Year Amount (with at least one set to "Budget") |
 | Revenues         | Category, Fiscal Year Amount (with at least one set to "Budget")      |
 | Capital Projects | Department, Purpose, Funding Source, Fiscal Year Amount               |
-| Reserves         | (no public page yet — data is stored but not rendered)                |
+| Reserves         | Fiscal Year Balance; Fund Name and Category are recommended           |
 
 Examples of well-formatted data files are in the `sample-data/` folder inside the project — open them in Excel or a text editor if you want a template to follow.
 
@@ -255,7 +255,9 @@ The admin header has a **Preview** link that opens your public portal (`/[townSl
 
 - Budget overview with year-over-year comparisons
 - Expense and revenue breakdowns by department and function (pie charts, stacked trend bars)
-- Capital project listings with funding sources
+- Separate Budget and Actual columns with column visibility controls
+- Capital project listings with department/funding views and multi-year trends
+- Reserve and stabilization fund balances across fiscal years
 - Searchable line-item tables with CSV export
 - Printable budget book generation
 - FAQ page with expandable answers

@@ -187,6 +187,54 @@ async function main() {
   await prisma.budgetRow.createMany({ data: capBudgetRows });
   console.log(`Seeded ${capBudgetRows.length} capital rows`);
 
+  // Seed generic reserve balances used by the public reserves explorer.
+  const reserveRows = parseCSV(path.join(sampleDir, "reserves.csv"));
+  const reserveHeaders = [
+    "Fund Name",
+    "Category",
+    "FY2022 Balance",
+    "FY2023 Balance",
+    "FY2024 Balance",
+    "FY2025 Balance",
+    "FY2026 Balance",
+  ];
+  const reserveUpload = await prisma.upload.create({
+    data: {
+      townId: sutton.id,
+      fileName: "reserves.csv",
+      fileType: "csv",
+      dataCategory: "reserves",
+      rowCount: reserveRows.length,
+      status: "published",
+      rawHeaders: JSON.stringify(reserveHeaders),
+    },
+  });
+  const reserveBalanceColumns = reserveHeaders.slice(2).map((column) => ({
+    column,
+    fiscalYear: column.match(/\d{4}/)?.[0] || "unknown",
+  }));
+  const reserveBudgetRows = [];
+
+  for (const row of reserveRows) {
+    for (const balanceColumn of reserveBalanceColumns) {
+      const amount = parseAmount(row[balanceColumn.column]);
+      if (amount === 0 && !row[balanceColumn.column]) continue;
+      reserveBudgetRows.push({
+        townId: sutton.id,
+        uploadId: reserveUpload.id,
+        dataCategory: "reserves",
+        fundName: row["Fund Name"]?.trim() || null,
+        category1: row["Category"]?.trim() || null,
+        fiscalYear: balanceColumn.fiscalYear,
+        amount,
+        amountType: "balance",
+      });
+    }
+  }
+
+  await prisma.budgetRow.createMany({ data: reserveBudgetRows });
+  console.log(`Seeded ${reserveBudgetRows.length} reserve rows`);
+
   console.log("Seeding complete!");
 }
 

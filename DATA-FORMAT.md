@@ -4,7 +4,7 @@ OpenBook accepts budget data in CSV (.csv) or Excel (.xlsx) format. This guide d
 
 ## General Rules
 
-- One file per data category (expenses, revenues, capital)
+- One file per data category (expenses, revenues, capital, reserves)
 - Files must have a header row with column names
 - Maximum file size: 10MB
 - Each column must have a unique name
@@ -41,6 +41,14 @@ OpenBook auto-detects columns using pattern matching. You can always override th
 | Purpose        | `Purpose`, `Project`, `Project Name`, `Description`            |
 | Funding Source  | `Funding Source`, `Source`, `Fund Source`                      |
 
+### Reserves
+
+| Target Field | Common Column Names                                      |
+|--------------|----------------------------------------------------------|
+| Fund Name    | `Fund Name`, `Fund Description`                           |
+| Category     | `Category`, `Type`                                        |
+| Balance      | `FY2026 Balance`, `2026 Ending Balance`, `FY26 Balance`    |
+
 ### Amount Columns
 
 OpenBook supports two data layouts:
@@ -55,7 +63,12 @@ Police,Salaries,1200000,1250000
 Police,Overtime,150000,160000
 ```
 
-Recognized patterns: `FY2026 Budget`, `FY25 Actual`, `2026 Appropriation`, `Adopted 2026`
+Recognized patterns include `FY2026 Budget`, `FY25 Actual`, `2026 Appropriation`, `FY2026 Balance`, and `2026 Ending Balance`.
+
+Budget and Actual values remain separate throughout the public explorers. A
+column such as `FY2025 Budget` is shown independently from `FY2025 Actual`, so
+planned and recorded amounts are never added together. Reserve uploads should
+use the Balance type.
 
 #### Long Format
 
@@ -94,6 +107,15 @@ Department,Purpose,FY2026 Budget,Funding Source
 DPW,Road Resurfacing Program,500000,Free Cash
 Fire,Engine Replacement,350000,Borrowing
 Schools,HVAC Replacement - Elementary,200000,Capital Stabilization
+```
+
+## Sample CSV: Reserves
+
+```csv
+Fund Name,Category,FY2025 Balance,FY2026 Balance
+General Stabilization,General,2400000,2550000
+Capital Stabilization,Capital,1100000,950000
+Free Cash,General,1800000,2050000
 ```
 
 ## Common Issues

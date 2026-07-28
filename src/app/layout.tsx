@@ -29,7 +29,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${atkinson.variable} ${bricolage.variable} h-full`}>
+    <html
+      lang="en"
+      className={`${atkinson.variable} ${bricolage.variable} h-full`}
+      data-scroll-behavior="smooth"
+    >
       <body className="min-h-full flex flex-col">
         <a
           href="#main-content"

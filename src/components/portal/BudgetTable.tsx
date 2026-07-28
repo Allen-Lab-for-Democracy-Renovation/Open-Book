@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { filterHierarchicalRows } from "@/lib/financial-series";
 import { formatCurrency } from "@/lib/format";
 import TooltipIcon from "./TooltipIcon";
 
@@ -16,42 +17,85 @@ interface TooltipMap {
   [key: string]: string;
 }
 
-interface YearColumnConfig {
-  // All fiscal years available, ascending. Row cells must include an amount
-  // for each year (in this order) after the static cells.
-  years: string[];
-  // Optional default selection. If omitted, defaults to the 3 most recent
-  // years. The dropdown only renders when years.length > 3.
-  defaultSelectedYears?: string[];
+interface SeriesColumn {
+  key: string;
+  label: string;
+}
+
+interface SeriesColumnConfig {
+  columns: SeriesColumn[];
+  defaultSelectedKeys?: string[];
+  comparison?: {
+    fromKey: string;
+    toKey: string;
+    label: string;
+  };
 }
 
 interface BudgetTableProps {
   headers: string[];
   rows: TableRow[];
   searchable?: boolean;
+  collapsible?: boolean;
+  searchPlaceholder?: string;
   categoryTooltips?: TooltipMap;
   lineItemTooltips?: TooltipMap;
-  yearColumns?: YearColumnConfig;
+  seriesColumns?: SeriesColumnConfig;
+}
+
+function displayDepth(row: TableRow, activeAncestorCount = 1): number {
+  if (row.depth !== undefined) return row.depth;
+  if (row.isGroup) return 0;
+  if (row.isSubtotal) return 1;
+  return Math.max(1, activeAncestorCount);
+}
+
+function removeCollapsedDescendants(
+  rows: TableRow[],
+  collapsedIds: Set<string>
+): TableRow[] {
+  const ancestors: { id: string; depth: number }[] = [];
+
+  return rows.filter((row) => {
+    const depth = displayDepth(row, ancestors.length);
+    while (
+      ancestors.length > 0 &&
+      ancestors[ancestors.length - 1].depth >= depth
+    ) {
+      ancestors.pop();
+    }
+
+    const hidden = ancestors.some(({ id }) => collapsedIds.has(id));
+    if (row.isGroup || row.isSubtotal) ancestors.push({ id: row.id, depth });
+    return !hidden;
+  });
 }
 
 export default function BudgetTable({
   headers,
   rows,
   searchable = true,
+  collapsible = true,
+  searchPlaceholder = "Search line items...",
   categoryTooltips = {},
   lineItemTooltips = {},
-  yearColumns,
+  seriesColumns,
 }: BudgetTableProps) {
+  const allColumns = useMemo(
+    () => seriesColumns?.columns ?? [],
+    [seriesColumns?.columns]
+  );
   const [query, setQuery] = useState("");
-  const [yearMenuOpen, setYearMenuOpen] = useState(false);
-  const [selectedYears, setSelectedYears] = useState<string[]>(() => {
-    if (!yearColumns) return [];
-    // Always start with the 3 most recent years selected, regardless of how
-    // many years are uploaded.
-    return yearColumns.defaultSelectedYears ?? yearColumns.years.slice(-3);
-  });
+  const [columnMenuOpen, setColumnMenuOpen] = useState(false);
+  const [selectedColumnKeys, setSelectedColumnKeys] = useState<string[]>(() =>
+    seriesColumns
+      ? seriesColumns.defaultSelectedKeys ??
+        seriesColumns.columns.slice(-4).map((column) => column.key)
+      : []
+  );
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
-  const yearMenuRef = useRef<HTMLDivElement>(null);
+  const columnMenuRef = useRef<HTMLDivElement>(null);
   const [canScroll, setCanScroll] = useState(false);
 
   useEffect(() => {
@@ -65,108 +109,138 @@ export default function BudgetTable({
   }, []);
 
   useEffect(() => {
-    if (!yearMenuOpen) return;
-    function handleClickOutside(e: MouseEvent) {
+    if (!columnMenuOpen) return;
+    function handleClickOutside(event: MouseEvent) {
       if (
-        yearMenuRef.current &&
-        !yearMenuRef.current.contains(e.target as Node)
+        columnMenuRef.current &&
+        !columnMenuRef.current.contains(event.target as Node)
       ) {
-        setYearMenuOpen(false);
+        setColumnMenuOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [yearMenuOpen]);
+  }, [columnMenuOpen]);
 
-  const allYears = yearColumns?.years ?? [];
   const staticHeaderCount = headers.length;
-  const showYearMenu = !!yearColumns && allYears.length > 3;
+  const visibleColumns = allColumns.filter((column) =>
+    selectedColumnKeys.includes(column.key)
+  );
+  const showColumnMenu = allColumns.length > 1;
+  const comparison = seriesColumns?.comparison;
 
-  // Visible years follow allYears' ascending order, filtered by selection.
-  const visibleYears = yearColumns
-    ? allYears.filter((y) => selectedYears.includes(y))
-    : [];
-
-  // Percent change is always computed from the two most recent years of data,
-  // regardless of which years are toggled in the selector.
-  const showPctChange = !!yearColumns && allYears.length >= 2;
-  const priorYear = showPctChange ? allYears[allYears.length - 2] : "";
-  const recentYear = showPctChange ? allYears[allYears.length - 1] : "";
-
-  const effectiveHeaders = yearColumns
+  const effectiveHeaders = seriesColumns
     ? [
         ...headers,
-        ...visibleYears.map((y) => `FY${y}`),
-        ...(showPctChange
-          ? [`% Change FY${priorYear} to FY${recentYear}`]
-          : []),
+        ...visibleColumns.map((column) => column.label),
+        ...(comparison ? [comparison.label] : []),
       ]
     : headers;
 
-  const effectiveRows = yearColumns
-    ? rows.map((r) => {
-      const staticCells = r.cells.slice(0, staticHeaderCount);
-      const yearCells = visibleYears.map((y) => {
-        const i = allYears.indexOf(y);
-        return r.cells[staticHeaderCount + i] ?? null;
-      });
-      let pctCells: (string | number | null)[] = [];
-      if (showPctChange) {
-        const prior = r.cells[staticHeaderCount + (allYears.length - 2)];
-        const recent = r.cells[staticHeaderCount + (allYears.length - 1)];
-        if (
-          typeof prior !== "number" ||
-          typeof recent !== "number" ||
-          prior === 0
-        ) {
-          pctCells = ["—"];
-        } else {
-          const pct = ((recent - prior) / prior) * 100;
-          const sign = pct > 0 ? "+" : "";
-          pctCells = [`${sign}${pct.toFixed(1)}%`];
+  const effectiveRows = seriesColumns
+    ? rows.map((row) => {
+        const staticCells = row.cells.slice(0, staticHeaderCount);
+        const seriesCells = visibleColumns.map((column) => {
+          const index = allColumns.findIndex(({ key }) => key === column.key);
+          return row.cells[staticHeaderCount + index] ?? null;
+        });
+        let comparisonCell: string | null = null;
+
+        if (comparison) {
+          const fromIndex = allColumns.findIndex(
+            ({ key }) => key === comparison.fromKey
+          );
+          const toIndex = allColumns.findIndex(
+            ({ key }) => key === comparison.toKey
+          );
+          const fromValue = row.cells[staticHeaderCount + fromIndex];
+          const toValue = row.cells[staticHeaderCount + toIndex];
+
+          if (
+            typeof fromValue === "number" &&
+            typeof toValue === "number" &&
+            fromValue !== 0
+          ) {
+            const percent = ((toValue - fromValue) / fromValue) * 100;
+            comparisonCell = `${percent > 0 ? "+" : ""}${percent.toFixed(1)}%`;
+          } else {
+            comparisonCell = "—";
+          }
         }
-      }
-      return { ...r, cells: [...staticCells, ...yearCells, ...pctCells] };
-    })
+
+        return {
+          ...row,
+          cells: [
+            ...staticCells,
+            ...seriesCells,
+            ...(comparison ? [comparisonCell] : []),
+          ],
+        };
+      })
     : rows;
 
-  const q = query.toLowerCase();
-  const filtered = query
-    ? effectiveRows.filter(
-        (r) =>
-          r.isGroup ||
-          r.isSubtotal ||
-          r.cells.some((c) => c != null && c.toString().toLowerCase().includes(q))
-      )
-    : effectiveRows;
+  const hierarchyIds = effectiveRows
+    .filter((row) => row.isGroup || row.isSubtotal)
+    .map((row) => row.id);
+  const hasHierarchy = collapsible && hierarchyIds.length > 0;
+  const everyGroupCollapsed =
+    hasHierarchy && hierarchyIds.every((id) => collapsedIds.has(id));
+  const searchedRows = filterHierarchicalRows(effectiveRows, query);
+  const displayedRows = query
+    ? searchedRows
+    : removeCollapsedDescendants(searchedRows, collapsedIds);
 
-  const toggleYear = (year: string) => {
-    setSelectedYears((prev) => {
-      if (prev.includes(year)) {
-        if (prev.length === 1) return prev; // keep at least one column visible
-        return prev.filter((y) => y !== year);
+  const toggleColumn = (key: string) => {
+    setSelectedColumnKeys((current) => {
+      if (current.includes(key)) {
+        if (current.length === 1) return current;
+        return current.filter((columnKey) => columnKey !== key);
       }
-      return [...prev, year];
+      return [...current, key];
     });
   };
 
+  const toggleRow = (id: string) => {
+    setCollapsedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAllRows = () => {
+    setCollapsedIds(
+      everyGroupCollapsed ? new Set() : new Set(hierarchyIds)
+    );
+  };
+
+  const tableMinWidth = Math.max(
+    640,
+    260 + Math.max(0, effectiveHeaders.length - 1) * 132
+  );
+
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-      {(searchable || showYearMenu) && (
-        <div className="px-4 py-3 border-b border-gray-100 flex items-start justify-between gap-3">
+      {(searchable || showColumnMenu || hasHierarchy) && (
+        <div className="px-4 py-3 border-b border-gray-100 flex flex-wrap items-start justify-between gap-3">
           {searchable ? (
-            <div className="flex-1 max-w-sm">
+            <div className="flex-1 min-w-[14rem] max-w-sm">
               <input
-                type="text"
-                placeholder="Search line items..."
+                type="search"
+                placeholder={searchPlaceholder}
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(event) => setQuery(event.target.value)}
                 className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                aria-label="Search budget items"
+                aria-label={searchPlaceholder.replace(/\.{3}$/, "")}
               />
               {query && (
-                <p className="text-xs text-gray-500 mt-1.5">
-                  {filtered.filter((r) => !r.isGroup && !r.isSubtotal).length}{" "}
+                <p className="text-xs text-gray-500 mt-1.5" aria-live="polite">
+                  {
+                    displayedRows.filter(
+                      (row) => !row.isGroup && !row.isSubtotal
+                    ).length
+                  }{" "}
                   results
                 </p>
               )}
@@ -175,61 +249,60 @@ export default function BudgetTable({
             <div />
           )}
 
-          {showYearMenu && (
-            <div className="relative" ref={yearMenuRef}>
-              <button
-                type="button"
-                onClick={() => setYearMenuOpen((o) => !o)}
-                aria-haspopup="listbox"
-                aria-expanded={yearMenuOpen}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-200 rounded-md bg-gray-50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-              >
-                <span className="font-medium text-gray-700">Fiscal Year</span>
-                <span className="text-gray-500 text-xs">
-                  {selectedYears.length} selected
-                </span>
-                <svg
-                  className="w-3 h-3 text-gray-400"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  aria-hidden="true"
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {showColumnMenu && (
+              <div className="relative" ref={columnMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setColumnMenuOpen((open) => !open)}
+                  aria-haspopup="true"
+                  aria-expanded={columnMenuOpen}
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-200 rounded-md bg-gray-50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                 >
-                  <path
-                    d="M3 4.5L6 7.5L9 4.5"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-              {yearMenuOpen && (
-                <div
-                  role="listbox"
-                  aria-multiselectable="true"
-                  className="absolute right-0 top-full mt-1 z-20 bg-white border border-gray-200 rounded-md shadow-lg min-w-[10rem] py-1"
-                >
-                  {[...allYears].reverse().map((year) => {
-                    const isSelected = selectedYears.includes(year);
-                    return (
+                  <span className="font-medium text-gray-700">Columns</span>
+                  <span className="text-gray-500 text-xs">
+                    {selectedColumnKeys.length}/{allColumns.length}
+                  </span>
+                  <span aria-hidden="true" className="text-gray-400 text-xs">
+                    {columnMenuOpen ? "▴" : "▾"}
+                  </span>
+                </button>
+                {columnMenuOpen && (
+                  <div
+                    aria-label="Column visibility"
+                    className="absolute right-0 top-full mt-1 z-30 bg-white border border-gray-200 rounded-md shadow-lg min-w-[13rem] max-h-80 overflow-y-auto py-1"
+                  >
+                    {[...allColumns].reverse().map((column) => (
                       <label
-                        key={year}
+                        key={column.key}
                         className="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-gray-50 cursor-pointer"
                       >
                         <input
                           type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleYear(year)}
+                          checked={selectedColumnKeys.includes(column.key)}
+                          onChange={() => toggleColumn(column.key)}
                           className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="text-gray-700">FY{year}</span>
+                        <span className="text-gray-700 whitespace-nowrap">
+                          {column.label}
+                        </span>
                       </label>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {hasHierarchy && (
+              <button
+                type="button"
+                onClick={toggleAllRows}
+                className="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-md bg-gray-50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+              >
+                {everyGroupCollapsed ? "Expand all" : "Collapse all"}
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -246,32 +319,27 @@ export default function BudgetTable({
         <div ref={scrollRef} className="overflow-x-auto">
           <table
             className="w-full text-sm"
-            style={{ minWidth: "600px" }}
-            role="table"
+            style={{ minWidth: `${tableMinWidth}px` }}
             aria-label="Budget data"
           >
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50/80">
-                {effectiveHeaders.map((h, i) => (
+                {effectiveHeaders.map((header, index) => (
                   <th
-                    key={h}
+                    key={`${header}-${index}`}
                     scope="col"
-                    className={`px-4 py-2.5 text-left text-xs font-semibold font-display uppercase tracking-wide text-gray-500 ${
-                      i > 0 && i < effectiveHeaders.length
-                        ? "hidden sm:table-cell"
-                        : ""
+                    className={`px-4 py-2.5 text-left text-xs font-semibold font-display uppercase tracking-wide text-gray-500 whitespace-nowrap ${
+                      index > 1 ? "min-w-[8.25rem]" : ""
                     }`}
-                    style={i > 1 ? { minWidth: "100px" } : undefined}
                   >
-                    {h}
+                    {header}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {filtered.map((row) => {
-                const firstCell =
-                  row.cells[0] != null ? row.cells[0].toString() : "";
+              {displayedRows.map((row) => {
+                const firstCell = row.cells[0]?.toString() ?? "";
                 const groupTooltip =
                   (row.isGroup || row.isSubtotal) && firstCell
                     ? categoryTooltips[firstCell]
@@ -280,6 +348,9 @@ export default function BudgetTable({
                   !row.isGroup && !row.isSubtotal && firstCell
                     ? lineItemTooltips[firstCell]
                     : undefined;
+                const isHierarchyRow = row.isGroup || row.isSubtotal;
+                const rowIsCollapsed = collapsedIds.has(row.id);
+                const depth = displayDepth(row);
 
                 return (
                   <tr
@@ -288,58 +359,61 @@ export default function BudgetTable({
                       row.isGroup
                         ? "bg-gray-100/80 font-semibold text-gray-900"
                         : row.isSubtotal
-                        ? "bg-gray-50/60 font-medium border-t border-gray-200 text-gray-800"
-                        : "border-b border-gray-50 hover:bg-gray-50/50 transition-colors duration-75 text-gray-700"
+                          ? "bg-gray-50/60 font-medium border-t border-gray-200 text-gray-800"
+                          : "border-b border-gray-50 hover:bg-gray-50/50 transition-colors duration-75 text-gray-700"
                     }
                   >
-                    {row.cells.map((cell, i) => (
+                    {row.cells.map((cell, index) => (
                       <td
-                        key={i}
-                        className={`px-4 py-2 ${
+                        key={index}
+                        className={`px-4 py-2 whitespace-nowrap ${
                           typeof cell === "number"
                             ? "text-right tabular-nums"
                             : ""
                         } ${
-                          cell !== null &&
-                          typeof cell === "string" &&
-                          cell.startsWith("+")
+                          typeof cell === "string" && cell.startsWith("+")
                             ? "text-emerald-600"
-                            : cell !== null &&
-                              typeof cell === "string" &&
-                              cell.startsWith("-")
-                            ? "text-red-600"
-                            : ""
+                            : typeof cell === "string" && cell.startsWith("-")
+                              ? "text-red-600"
+                              : ""
                         }`}
                         style={
-                          row.depth && i === 0
-                            ? { paddingLeft: `${1 + row.depth * 1.25}rem` }
+                          depth > 0 && index === 0
+                            ? { paddingLeft: `${1 + depth * 1.25}rem` }
                             : undefined
                         }
-                        {...(itemTooltip && i === 0
+                        {...(itemTooltip && index === 0
                           ? { title: itemTooltip }
                           : {})}
                       >
-                        <span className="inline-flex items-center gap-0.5">
+                        <span className="inline-flex items-center gap-1.5">
+                          {index === 0 && isHierarchyRow && (
+                            <button
+                              type="button"
+                              onClick={() => toggleRow(row.id)}
+                              aria-label={`${
+                                rowIsCollapsed ? "Expand" : "Collapse"
+                              } ${firstCell}`}
+                              className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-500 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <span aria-hidden="true">
+                                {rowIsCollapsed ? "▸" : "▾"}
+                              </span>
+                            </button>
+                          )}
                           {typeof cell === "number" ? (
                             <span className="tabular-nums">
                               {formatCurrency(cell)}
                             </span>
                           ) : (
-                            <span
-                              className={`${
-                                row.depth && i === 0 ? "text-gray-600" : ""
-                              }`}
-                            >
+                            <span className={depth > 0 && index === 0 ? "text-gray-700" : ""}>
                               {cell ?? ""}
                             </span>
                           )}
-                          {i === 0 && groupTooltip && (
-                            <TooltipIcon
-                              text={groupTooltip}
-                              label={firstCell}
-                            />
+                          {index === 0 && groupTooltip && (
+                            <TooltipIcon text={groupTooltip} label={firstCell} />
                           )}
-                          {i === 0 && itemTooltip && (
+                          {index === 0 && itemTooltip && (
                             <TooltipIcon text={itemTooltip} label={firstCell} />
                           )}
                         </span>
@@ -349,15 +423,13 @@ export default function BudgetTable({
                 );
               })}
 
-              {filtered.length === 0 && (
+              {displayedRows.length === 0 && (
                 <tr>
                   <td
                     colSpan={effectiveHeaders.length}
                     className="px-4 py-8 text-center text-gray-500 text-sm"
                   >
-                    {query
-                      ? "No items match your search."
-                      : "No data available."}
+                    {query ? "No items match your search." : "No data available."}
                   </td>
                 </tr>
               )}

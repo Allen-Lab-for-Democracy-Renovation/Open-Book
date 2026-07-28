@@ -6,6 +6,11 @@ import {
   buildExpenseSummaryTiles,
   detectCurrentAndPreviousYear,
 } from "@/lib/aggregator";
+import {
+  buildFinancialColumns,
+  preferredRowsForYear,
+  rowsForFinancialColumn,
+} from "@/lib/financial-series";
 import { formatCurrency } from "@/lib/format";
 import SummaryTiles from "@/components/portal/SummaryTiles";
 import PieChart from "@/components/portal/PieChart";
@@ -22,54 +27,46 @@ export default async function ExpensesPage({
   const town = await prisma.town.findUnique({ where: { slug: townSlug } });
   if (!town) return notFound();
 
-  // Fetch tooltips
-  const tooltipRows = await prisma.tooltip.findMany({
-    where: { townId: town.id },
-  });
+  const [tooltipRows, allRows] = await Promise.all([
+    prisma.tooltip.findMany({ where: { townId: town.id } }),
+    prisma.budgetRow.findMany({
+      where: { townId: town.id, dataCategory: "expenses" },
+    }),
+  ]);
   const categoryTooltips: Record<string, string> = {};
   const lineItemTooltips: Record<string, string> = {};
-  for (const t of tooltipRows) {
-    if (t.scope === "category") categoryTooltips[t.key] = t.text;
-    else if (t.scope === "line-item") lineItemTooltips[t.key] = t.text;
+  for (const tooltip of tooltipRows) {
+    if (tooltip.scope === "category") {
+      categoryTooltips[tooltip.key] = tooltip.text;
+    } else if (tooltip.scope === "line-item") {
+      lineItemTooltips[tooltip.key] = tooltip.text;
+    }
   }
-
-  const allRows = await prisma.budgetRow.findMany({
-    where: { townId: town.id, dataCategory: "expenses" },
-  });
 
   const {
     currentYear,
-    previousYear: prevYear,
+    previousYear: previousYear,
     allYears,
   } = detectCurrentAndPreviousYear(allRows);
-
-  const current = allRows.filter(
-    (r) => r.fiscalYear === currentYear && r.amountType === "budget"
-  );
-  const prev = prevYear
-    ? allRows.filter(
-        (r) =>
-          r.fiscalYear === prevYear &&
-          (r.amountType === "budget" || r.amountType === "actual")
-      )
+  const current = preferredRowsForYear(allRows, currentYear);
+  const previous = previousYear
+    ? preferredRowsForYear(allRows, previousYear)
     : [];
-
-  const hasPriorYear = prevYear !== null && prev.length > 0;
-  const tiles = buildExpenseSummaryTiles(current, prev);
+  const hasPriorYear = previousYear !== null && previous.length > 0;
+  const tiles = buildExpenseSummaryTiles(current, previous);
   const byFunction = toChartData(groupAndSum(current, "functionArea"));
 
   const years = allYears.length > 0 ? allYears : [currentYear];
-  const functions = [...new Set(current.map((r) => r.functionArea || "Other"))];
-  const trendSeries = functions.slice(0, 8).map((fn) => ({
-    label: fn,
-    data: years.map((y) =>
-      allRows
-        .filter((r) => r.functionArea === fn && r.fiscalYear === y)
-        .reduce((s, r) => s + r.amount, 0)
+  const functions = [...new Set(current.map((row) => row.functionArea || "Other"))];
+  const trendSeries = functions.slice(0, 8).map((functionName) => ({
+    label: functionName,
+    data: years.map((year) =>
+      preferredRowsForYear(allRows, year)
+        .filter((row) => (row.functionArea || "Other") === functionName)
+        .reduce((sum, row) => sum + row.amount, 0)
     ),
   }));
 
-  // Build table rows grouped by function -> department, showing the most recent 3 fiscal years.
   type TableRow = {
     id: string;
     cells: (string | number | null)[];
@@ -78,90 +75,90 @@ export default async function ExpensesPage({
     depth?: number;
   };
 
-  // tableYears includes every fiscal year we have data for (ascending). The
-  // BudgetTable defaults to showing the most recent 3 columns and exposes a
-  // dropdown to toggle the rest when more than 3 years are available.
-  const tableYears = allYears.length > 0 ? allYears : [currentYear];
+  const financialColumns = buildFinancialColumns(allRows, ["budget", "actual"]);
+  const functionTotalsByColumn = new Map<string, Map<string, number>>();
+  const departmentTotalsByColumn = new Map<string, Map<string, number>>();
+  const lineTotalsByColumn = new Map<string, Map<string, number>>();
 
-  // For each year, aggregate amounts by function, department, and line key.
-  // Current year uses "budget"; prior years fall back to budget/actual.
-  const fnTotalsByYear = new Map<string, Map<string, number>>();
-  const deptTotalsByYear = new Map<string, Map<string, number>>();
-  const lineTotalsByYear = new Map<string, Map<string, number>>();
+  for (const column of financialColumns) {
+    const columnRows = rowsForFinancialColumn(allRows, column);
+    const functionTotals = new Map<string, number>();
+    const departmentTotals = new Map<string, number>();
+    const lineTotals = new Map<string, number>();
 
-  for (const year of tableYears) {
-    const yearRows = allRows.filter(
-      (r) =>
-        r.fiscalYear === year &&
-        (year === currentYear
-          ? r.amountType === "budget"
-          : r.amountType === "budget" || r.amountType === "actual")
-    );
-    const fnMap = new Map<string, number>();
-    const deptMap = new Map<string, number>();
-    const lineMap = new Map<string, number>();
-    for (const row of yearRows) {
-      const fn = row.functionArea || "Other";
-      const dept = row.department || "Other";
-      const lineKey = `${fn}|${dept}|${row.objectCode || ""}|${
+    for (const row of columnRows) {
+      const functionName = row.functionArea || "Other";
+      const department = row.department || "Other";
+      const departmentKey = `${functionName}|${department}`;
+      const lineKey = `${departmentKey}|${row.objectCode || ""}|${
         row.lineItem || ""
       }`;
-      fnMap.set(fn, (fnMap.get(fn) || 0) + row.amount);
-      deptMap.set(
-        `${fn}|${dept}`,
-        (deptMap.get(`${fn}|${dept}`) || 0) + row.amount
+      functionTotals.set(
+        functionName,
+        (functionTotals.get(functionName) || 0) + row.amount
       );
-      lineMap.set(lineKey, (lineMap.get(lineKey) || 0) + row.amount);
+      departmentTotals.set(
+        departmentKey,
+        (departmentTotals.get(departmentKey) || 0) + row.amount
+      );
+      lineTotals.set(lineKey, (lineTotals.get(lineKey) || 0) + row.amount);
     }
-    fnTotalsByYear.set(year, fnMap);
-    deptTotalsByYear.set(year, deptMap);
-    lineTotalsByYear.set(year, lineMap);
+
+    functionTotalsByColumn.set(column.key, functionTotals);
+    departmentTotalsByColumn.set(column.key, departmentTotals);
+    lineTotalsByColumn.set(column.key, lineTotals);
   }
 
   const tableRows: TableRow[] = [];
   const functionGroups = new Map<string, typeof current>();
-
   for (const row of current) {
-    const fn = row.functionArea || "Other";
-    if (!functionGroups.has(fn)) functionGroups.set(fn, []);
-    functionGroups.get(fn)!.push(row);
+    const functionName = row.functionArea || "Other";
+    if (!functionGroups.has(functionName)) functionGroups.set(functionName, []);
+    functionGroups.get(functionName)!.push(row);
   }
 
-  for (const [fn, fnRows] of functionGroups) {
+  for (const [functionName, functionRows] of functionGroups) {
     tableRows.push({
-      id: `fn-${fn}`,
+      id: `function-${functionName}`,
       cells: [
-        fn,
+        functionName,
         "",
-        ...tableYears.map((y) => fnTotalsByYear.get(y)?.get(fn) || 0),
+        ...financialColumns.map(
+          (column) =>
+            functionTotalsByColumn.get(column.key)?.get(functionName) || 0
+        ),
       ],
       isGroup: true,
+      depth: 0,
     });
 
-    // Group by department
-    const deptGroups = new Map<string, typeof fnRows>();
-    for (const row of fnRows) {
-      const dept = row.department || "Other";
-      if (!deptGroups.has(dept)) deptGroups.set(dept, []);
-      deptGroups.get(dept)!.push(row);
+    const departmentGroups = new Map<string, typeof functionRows>();
+    for (const row of functionRows) {
+      const department = row.department || "Other";
+      if (!departmentGroups.has(department)) departmentGroups.set(department, []);
+      departmentGroups.get(department)!.push(row);
     }
 
-    for (const [dept, deptRows] of deptGroups) {
+    for (const [department, departmentRows] of departmentGroups) {
+      const departmentKey = `${functionName}|${department}`;
       tableRows.push({
-        id: `dept-${fn}-${dept}`,
+        id: `department-${functionName}-${department}`,
         cells: [
-          dept,
+          department,
           "",
-          ...tableYears.map(
-            (y) => deptTotalsByYear.get(y)?.get(`${fn}|${dept}`) || 0
+          ...financialColumns.map(
+            (column) =>
+              departmentTotalsByColumn
+                .get(column.key)
+                ?.get(departmentKey) || 0
           ),
         ],
         isSubtotal: true,
         depth: 1,
       });
 
-      for (const row of deptRows) {
-        const lineKey = `${fn}|${dept}|${row.objectCode || ""}|${
+      for (const row of departmentRows) {
+        const lineKey = `${departmentKey}|${row.objectCode || ""}|${
           row.lineItem || ""
         }`;
         tableRows.push({
@@ -169,8 +166,8 @@ export default async function ExpensesPage({
           cells: [
             row.lineItem || row.objectCode || "",
             row.objectCode || "",
-            ...tableYears.map(
-              (y) => lineTotalsByYear.get(y)?.get(lineKey) || 0
+            ...financialColumns.map(
+              (column) => lineTotalsByColumn.get(column.key)?.get(lineKey) || 0
             ),
           ],
           depth: 2,
@@ -179,22 +176,22 @@ export default async function ExpensesPage({
     }
   }
 
-  const exportData = current.map((r) => {
-    const lineKey = `${r.functionArea || "Other"}|${r.department || "Other"}|${
-      r.objectCode || ""
-    }|${r.lineItem || ""}`;
-    const yearCols: Record<string, string> = {};
-    for (const y of tableYears) {
-      yearCols[`FY${y}`] = formatCurrency(
-        lineTotalsByYear.get(y)?.get(lineKey) || 0
+  const exportData = current.map((row) => {
+    const lineKey = `${row.functionArea || "Other"}|${
+      row.department || "Other"
+    }|${row.objectCode || ""}|${row.lineItem || ""}`;
+    const amountColumns: Record<string, string> = {};
+    for (const column of financialColumns) {
+      amountColumns[column.label] = formatCurrency(
+        lineTotalsByColumn.get(column.key)?.get(lineKey) || 0
       );
     }
     return {
-      Function: r.functionArea || "",
-      Department: r.department || "",
-      "Line Item": r.lineItem || "",
-      Account: r.objectCode || "",
-      ...yearCols,
+      Function: row.functionArea || "",
+      Department: row.department || "",
+      "Line Item": row.lineItem || "",
+      Account: row.objectCode || "",
+      ...amountColumns,
     };
   });
 
@@ -203,7 +200,9 @@ export default async function ExpensesPage({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Expenses</h1>
-          <p className="text-gray-600 mt-1">Yearly departmental spending</p>
+          <p className="text-gray-600 mt-1">
+            FY{currentYear} adopted budget · {current.length} line items
+          </p>
         </div>
         <ExportButton
           data={exportData}
@@ -213,17 +212,13 @@ export default async function ExpensesPage({
 
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
         <p className="text-sm text-amber-800 leading-relaxed">
-          <strong>How to read this page:</strong> The summary tiles show the big
-          picture — total spending
+          <strong>How to read this page:</strong> Budget columns show adopted
+          appropriations. Actual columns show recorded spending when published.
+          They remain separate so planned and recorded amounts can be compared
+          without being added together.
           {hasPriorYear
-            ? ", the largest area, and how it changed from last year"
-            : " and the largest area"}
-          . The charts below break spending down visually. Scroll further to see
-          every line item in a searchable table. Look for the{" "}
-          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-300 text-gray-600 text-[10px] font-bold">
-            ?
-          </span>{" "}
-          icon next to items — hover or tap it for a plain-language explanation.
+            ? " Summary changes compare the latest adopted budget with the prior year's budget, or its actual amount when no budget was published."
+            : ""}
         </p>
       </div>
 
@@ -236,20 +231,30 @@ export default async function ExpensesPage({
           townColor={town.primaryColor}
         />
         <BarChart
-          categories={years.map((y) => `FY${y}`)}
+          categories={years.map((year) => `FY${year}`)}
           series={trendSeries}
           title="Expense Trend by Function"
           stacked
         />
       </div>
 
-      <BudgetTable
-        headers={["Description", "Account"]}
-        rows={tableRows}
-        categoryTooltips={categoryTooltips}
-        lineItemTooltips={lineItemTooltips}
-        yearColumns={{ years: tableYears }}
-      />
+      <section>
+        <h2 className="text-lg font-medium">Expense Detail Explorer</h2>
+        <p className="text-sm text-gray-600 mt-1 mb-4">
+          Organized by function area, department, and account
+        </p>
+        <BudgetTable
+          headers={["Description", "Account"]}
+          rows={tableRows}
+          searchPlaceholder="Search accounts and line items..."
+          categoryTooltips={categoryTooltips}
+          lineItemTooltips={lineItemTooltips}
+          seriesColumns={{
+            columns: financialColumns.map(({ key, label }) => ({ key, label })),
+            defaultSelectedKeys: financialColumns.map(({ key }) => key),
+          }}
+        />
+      </section>
     </div>
   );
 }

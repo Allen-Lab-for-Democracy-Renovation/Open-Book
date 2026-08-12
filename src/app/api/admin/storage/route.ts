@@ -2,8 +2,12 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { readdirSync, statSync } from "fs";
 import { join } from "path";
+import { requireAdmin } from "@/lib/auth";
 
 export async function GET() {
+  const admin = await requireAdmin();
+  if (admin instanceof NextResponse) return admin;
+
   const [databaseSize] = await prisma.$queryRaw<{ size: bigint }[]>`
     SELECT pg_database_size(current_database())::bigint AS size
   `;

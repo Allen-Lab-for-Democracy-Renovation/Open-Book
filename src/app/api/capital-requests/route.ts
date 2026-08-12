@@ -1,17 +1,35 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getStaffSessionFromCookie } from "@/lib/staff-auth";
+import { getSessionFromCookie } from "@/lib/auth";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const staffUserId = searchParams.get("staffUserId");
-  const townId = searchParams.get("townId");
   const status = searchParams.get("status");
 
+  const adminSession = await getSessionFromCookie();
+  const staffSession = await getStaffSessionFromCookie();
+
+  if (!adminSession && !staffSession) {
+    return NextResponse.json(
+      { error: "Authentication required" },
+      { status: 401 }
+    );
+  }
+
   const where: Record<string, unknown> = {};
-  if (staffUserId) where.staffUserId = staffUserId;
-  if (townId) where.townId = townId;
   if (status) where.status = status;
+
+  if (adminSession) {
+    // Admins may filter by town and/or staff member.
+    const townId = searchParams.get("townId");
+    const staffUserId = searchParams.get("staffUserId");
+    if (townId) where.townId = townId;
+    if (staffUserId) where.staffUserId = staffUserId;
+  } else if (staffSession) {
+    // Staff can only ever see their own requests, regardless of query params.
+    where.staffUserId = staffSession.userId;
+  }
 
   const requests = await prisma.capitalRequest.findMany({
     where,

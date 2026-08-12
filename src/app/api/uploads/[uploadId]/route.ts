@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ uploadId: string }> }
 ) {
+  const admin = await requireAdmin();
+  if (admin instanceof NextResponse) return admin;
+
   const { uploadId } = await params;
 
   const upload = await prisma.upload.findUnique({ where: { id: uploadId } });
@@ -24,6 +28,9 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ uploadId: string }> }
 ) {
+  const admin = await requireAdmin();
+  if (admin instanceof NextResponse) return admin;
+
   const { uploadId } = await params;
 
   const upload = await prisma.upload.findUnique({ where: { id: uploadId } });

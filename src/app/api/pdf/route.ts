@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { randomUUID } from "crypto";
+import { requireAdmin } from "@/lib/auth";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
@@ -23,6 +24,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const admin = await requireAdmin();
+  if (admin instanceof NextResponse) return admin;
+
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
   const townId = formData.get("townId") as string | null;

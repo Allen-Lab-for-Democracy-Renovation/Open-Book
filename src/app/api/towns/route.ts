@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 
 export async function GET() {
   const towns = await prisma.town.findMany({
@@ -10,6 +11,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const admin = await requireAdmin();
+  if (admin instanceof NextResponse) return admin;
+
   const body = await request.json();
   const { name, slug, primaryColor } = body;
 

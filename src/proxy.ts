@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getSession } from "@/lib/auth";
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Only protect /admin routes (except login and register)
@@ -25,7 +25,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
-  const session = getSession(token);
+  const session = await getSession(token);
   if (!session) {
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }

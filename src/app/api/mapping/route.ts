@@ -3,8 +3,12 @@ import { prisma } from "@/lib/db";
 import { cleanRows } from "@/lib/parser";
 import { normalizeRows, stripZeroAmountRows } from "@/lib/normalizer";
 import type { ColumnMappingInput } from "@/types";
+import { requireAdmin } from "@/lib/auth";
 
 export async function POST(request: Request) {
+  const admin = await requireAdmin();
+  if (admin instanceof NextResponse) return admin;
+
   const body = await request.json();
   const { uploadId, mappings, rawData } = body as {
     uploadId: string;

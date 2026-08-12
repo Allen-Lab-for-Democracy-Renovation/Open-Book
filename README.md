@@ -6,7 +6,7 @@ A municipal budget transparency platform. OpenBook lets towns publish their budg
 
 ## Who this guide is for
 
-This README is written so that **anyone** — including people who have never written code or used a "terminal" before — can set up OpenBook on their own computer and try it out. If you are technical, skim past the explanatory sidebars. If you are not, follow each step in order; nothing is skipped, and every command is explained.
+This README is written so that **anyone** — including people who have never written code or used a "terminal" before — can set up OpenBook on their own computer and try it out.
 
 A short **glossary** at the bottom defines any term that looks unfamiliar (look for words in bold, like **terminal** or **repository**, in the steps below).
 
@@ -320,7 +320,7 @@ The app runs on port 3000. Use `pm2` to keep it running, a reverse proxy (nginx)
 
 ---
 
-# Part 4 — Reference (for the technically curious)
+# Part 4 — Reference
 
 You do not need any of this section to use OpenBook. It's here for anyone who wants to understand or modify how it works.
 

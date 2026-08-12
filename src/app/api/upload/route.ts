@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { parseCSV, parseExcel, cleanRows } from "@/lib/parser";
 import { detectColumns } from "@/lib/column-detector";
 import type { DataCategory } from "@/types";
+import { requireAdmin } from "@/lib/auth";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -12,6 +13,9 @@ interface ValidationError {
 }
 
 export async function POST(request: Request) {
+  const admin = await requireAdmin();
+  if (admin instanceof NextResponse) return admin;
+
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
   const townId = formData.get("townId") as string;

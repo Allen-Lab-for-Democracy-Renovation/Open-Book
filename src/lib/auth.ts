@@ -1,5 +1,6 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
 const SESSION_COOKIE = "openbook_session";
@@ -74,5 +75,21 @@ export async function getCurrentUser() {
     where: { id: session.userId },
     select: { id: true, email: true, name: true },
   });
+  return user;
+}
+
+/**
+ * Guard for API routes: returns the current admin user, or a 401
+ * NextResponse to return immediately if there is no valid session.
+ *
+ * Usage:
+ *   const admin = await requireAdmin();
+ *   if (admin instanceof NextResponse) return admin;
+ */
+export async function requireAdmin() {
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   return user;
 }

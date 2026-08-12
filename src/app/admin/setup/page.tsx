@@ -259,7 +259,7 @@ export default function SetupPage() {
           <input
             id="logoFile"
             type="file"
-            accept="image/png,image/jpeg,image/svg+xml,image/webp"
+            accept="image/png,image/jpeg,image/webp"
             onChange={handleLogoUpload}
             disabled={logoUploading}
             className="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 disabled:opacity-50"
@@ -267,7 +267,7 @@ export default function SetupPage() {
           <p className="text-xs text-gray-500 mt-1">
             {logoUploading
               ? "Uploading..."
-              : "Upload your town seal or logo. PNG, JPEG, SVG, or WebP (max 5 MB)."}
+              : "Upload your town seal or logo. PNG, JPEG, or WebP (max 5 MB)."}
           </p>
         </div>
 

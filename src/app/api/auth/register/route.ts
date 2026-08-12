@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/db";
 import { hashPassword, createSession, setSessionCookie, getCurrentUser } from "@/lib/auth";
+import { sendVerificationEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -50,16 +51,13 @@ export async function POST(request: Request) {
     await setSessionCookie(token);
   }
 
-  if (process.env.NODE_ENV === "development") {
-    console.log(`[dev] Verification link for ${email}: /verify?token=${verificationToken}`);
-  }
+  await sendVerificationEmail(email, name, verificationToken);
 
   return NextResponse.json(
     {
       id: user.id,
       email: user.email,
       name: user.name,
-      verificationToken,
     },
     { status: 201 }
   );

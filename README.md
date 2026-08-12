@@ -179,9 +179,9 @@ The admin dashboard has a top navigation bar; the sections below correspond to t
 
 Go to <http://localhost:3000/admin/register>.
 
-The **first person who registers automatically becomes the administrator**. After that, the registration page is locked unless you (the admin) are signed in. This is a security feature — once you've claimed the admin account, nobody else can quietly create one on your portal.
+The **first person who registers automatically becomes the administrator** and is signed in immediately — no separate login step needed the first time. After that, the registration page is locked unless you (the admin) are signed in and creating another admin account yourself. This is a security feature — once you've claimed the admin account, nobody else can quietly create one on your portal.
 
-Then sign in at <http://localhost:3000/admin/login>.
+Next time, sign in at <http://localhost:3000/admin/login>.
 
 ## 2. Configure your town (Settings tab)
 
@@ -192,7 +192,6 @@ Go to `/admin/setup`. You'll fill in:
 - **Logo** — an image (your town seal, for example) that appears as the browser tab icon and at the top of pages.
 - **Contact email** — where resident questions will be sent.
 - **About text** — a short description that appears on the portal homepage.
-- **Invite code** — a shared code that town staff use when self-registering at `/staff/register`. Pick something only staff would know.
 
 ## 3. Upload budget data (Upload tab)
 
@@ -232,7 +231,17 @@ Sample Data (Revenue)
 
 Different categories live independently — uploading a Revenues file does not affect your Expenses data, and vice versa. Use **Upload New Data** to add another file alongside what's already there.
 
-## 5. Polish the portal
+## 5. Invite town staff (Users tab)
+
+Town staff (department heads, etc.) can't self-register — accounts are created by invite only. Go to `/admin/users`:
+
+- **Invite a staff member** — enter their email address and click **Create Invite**. A unique, single-use invite link is generated and automatically copied to your clipboard. Send it to them however you prefer (email, text, in person) — without the link, nobody can register.
+- **Pending invites** — lists invites that have been created but not yet accepted.
+- **Allowed email domains** — optionally restrict invites to specific email domains (e.g., only `@yourtown.gov` addresses). Leave this unset to allow any email.
+
+Once a staff member clicks their invite link at `/staff/join?token=...`, they set their own name, password, and department, and are signed in immediately. From there they can submit and track capital expenditure requests, which you review under the **Requests** tab.
+
+## 6. Polish the portal
 
 Once data is uploaded, several optional features make the portal more useful for residents:
 
@@ -243,7 +252,7 @@ Once data is uploaded, several optional features make the portal more useful for
 - **Requests** (`/admin/requests`) — review and approve capital expenditure requests submitted by town staff via `/staff`.
 - **Transfer** (`/admin/transfer`) — export/import town data to move it between environments (for example, from your laptop to a shared server).
 
-## 6. Preview the public site
+## 7. Preview the public site
 
 The admin header has a **Preview** link that opens your public portal (`/[townSlug]`) in a new browser tab, so you can see exactly what residents will see while you continue editing.
 

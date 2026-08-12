@@ -2,11 +2,15 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { unlink } from "fs/promises";
 import { join } from "path";
+import { requireAdmin } from "@/lib/auth";
 
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ pdfId: string }> }
 ) {
+  const admin = await requireAdmin();
+  if (admin instanceof NextResponse) return admin;
+
   const { pdfId } = await params;
 
   let pdf;

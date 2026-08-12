@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ questionId: string }> }
 ) {
+  const admin = await requireAdmin();
+  if (admin instanceof NextResponse) return admin;
+
   const { questionId } = await params;
   const body = await request.json();
   const { status, reply } = body;
@@ -40,6 +44,9 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ questionId: string }> }
 ) {
+  const admin = await requireAdmin();
+  if (admin instanceof NextResponse) return admin;
+
   const { questionId } = await params;
 
   const question = await prisma.residentQuestion.findUnique({

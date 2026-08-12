@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ townId: string }> }
 ) {
+  const admin = await requireAdmin();
+  if (admin instanceof NextResponse) return admin;
+
   const { townId } = await params;
   const body = await request.json();
   const { name, slug, primaryColor, logoUrl, contactEmail, aboutText, allowedDomains } = body;

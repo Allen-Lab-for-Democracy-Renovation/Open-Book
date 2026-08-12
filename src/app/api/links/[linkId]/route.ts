@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ linkId: string }> }
 ) {
+  const admin = await requireAdmin();
+  if (admin instanceof NextResponse) return admin;
+
   const { linkId } = await params;
   const body = await request.json();
   const { title, url, description, category, sortOrder } = body;
@@ -56,6 +60,9 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ linkId: string }> }
 ) {
+  const admin = await requireAdmin();
+  if (admin instanceof NextResponse) return admin;
+
   const { linkId } = await params;
 
   try {

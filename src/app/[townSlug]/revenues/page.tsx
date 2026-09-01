@@ -125,6 +125,25 @@ export default async function RevenuesPage({
       depth: 0,
     });
 
+    const hasSubcategories = categoryRows.some((row) => row.category2);
+
+    if (!hasSubcategories) {
+      for (const row of categoryRows) {
+        const lineKey = `${category}|Other|${row.lineItem || ""}`;
+        tableRows.push({
+          id: row.id,
+          cells: [
+            row.lineItem || category,
+            ...financialColumns.map(
+              (column) => lineTotalsByColumn.get(column.key)?.get(lineKey) || 0
+            ),
+          ],
+          depth: 1,
+        });
+      }
+      continue;
+    }
+
     const subcategoryGroups = new Map<string, typeof categoryRows>();
     for (const row of categoryRows) {
       const subcategory = row.category2 || "Other";

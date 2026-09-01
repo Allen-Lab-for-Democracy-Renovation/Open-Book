@@ -78,19 +78,22 @@ export default async function ExpensesPage({
   const financialColumns = buildFinancialColumns(allRows, ["budget", "actual"]);
   const functionTotalsByColumn = new Map<string, Map<string, number>>();
   const departmentTotalsByColumn = new Map<string, Map<string, number>>();
+  const subcategoryTotalsByColumn = new Map<string, Map<string, number>>();
   const lineTotalsByColumn = new Map<string, Map<string, number>>();
 
   for (const column of financialColumns) {
     const columnRows = rowsForFinancialColumn(allRows, column);
     const functionTotals = new Map<string, number>();
     const departmentTotals = new Map<string, number>();
+    const subcategoryTotals = new Map<string, number>();
     const lineTotals = new Map<string, number>();
 
     for (const row of columnRows) {
       const functionName = row.functionArea || "Other";
       const department = row.department || "Other";
       const departmentKey = `${functionName}|${department}`;
-      const lineKey = `${departmentKey}|${row.objectCode || ""}|${
+      const subcategoryKey = `${departmentKey}|${row.category2 || "Other"}`;
+      const lineKey = `${subcategoryKey}|${row.objectCode || ""}|${
         row.lineItem || ""
       }`;
       functionTotals.set(
@@ -101,11 +104,16 @@ export default async function ExpensesPage({
         departmentKey,
         (departmentTotals.get(departmentKey) || 0) + row.amount
       );
+      subcategoryTotals.set(
+        subcategoryKey,
+        (subcategoryTotals.get(subcategoryKey) || 0) + row.amount
+      );
       lineTotals.set(lineKey, (lineTotals.get(lineKey) || 0) + row.amount);
     }
 
     functionTotalsByColumn.set(column.key, functionTotals);
     departmentTotalsByColumn.set(column.key, departmentTotals);
+    subcategoryTotalsByColumn.set(column.key, subcategoryTotals);
     lineTotalsByColumn.set(column.key, lineTotals);
   }
 
@@ -157,21 +165,71 @@ export default async function ExpensesPage({
         depth: 1,
       });
 
+      const hasSubcategories = departmentRows.some((row) => row.category2);
+
+      if (!hasSubcategories) {
+        for (const row of departmentRows) {
+          const lineKey = `${departmentKey}|Other|${row.objectCode || ""}|${
+            row.lineItem || ""
+          }`;
+          tableRows.push({
+            id: row.id,
+            cells: [
+              row.lineItem || row.objectCode || "",
+              row.objectCode || "",
+              ...financialColumns.map(
+                (column) => lineTotalsByColumn.get(column.key)?.get(lineKey) || 0
+              ),
+            ],
+            depth: 2,
+          });
+        }
+        continue;
+      }
+
+      const subcategoryGroups = new Map<string, typeof departmentRows>();
       for (const row of departmentRows) {
-        const lineKey = `${departmentKey}|${row.objectCode || ""}|${
-          row.lineItem || ""
-        }`;
+        const subcategory = row.category2 || "Other";
+        if (!subcategoryGroups.has(subcategory)) {
+          subcategoryGroups.set(subcategory, []);
+        }
+        subcategoryGroups.get(subcategory)!.push(row);
+      }
+
+      for (const [subcategory, subcategoryRows] of subcategoryGroups) {
+        const subcategoryKey = `${departmentKey}|${subcategory}`;
         tableRows.push({
-          id: row.id,
+          id: `subcategory-${functionName}-${department}-${subcategory}`,
           cells: [
-            row.lineItem || row.objectCode || "",
-            row.objectCode || "",
+            subcategory,
+            "",
             ...financialColumns.map(
-              (column) => lineTotalsByColumn.get(column.key)?.get(lineKey) || 0
+              (column) =>
+                subcategoryTotalsByColumn
+                  .get(column.key)
+                  ?.get(subcategoryKey) || 0
             ),
           ],
+          isSubtotal: true,
           depth: 2,
         });
+
+        for (const row of subcategoryRows) {
+          const lineKey = `${subcategoryKey}|${row.objectCode || ""}|${
+            row.lineItem || ""
+          }`;
+          tableRows.push({
+            id: row.id,
+            cells: [
+              row.lineItem || row.objectCode || "",
+              row.objectCode || "",
+              ...financialColumns.map(
+                (column) => lineTotalsByColumn.get(column.key)?.get(lineKey) || 0
+              ),
+            ],
+            depth: 3,
+          });
+        }
       }
     }
   }
@@ -179,7 +237,9 @@ export default async function ExpensesPage({
   const exportData = current.map((row) => {
     const lineKey = `${row.functionArea || "Other"}|${
       row.department || "Other"
-    }|${row.objectCode || ""}|${row.lineItem || ""}`;
+    }|${row.category2 || "Other"}|${row.objectCode || ""}|${
+      row.lineItem || ""
+    }`;
     const amountColumns: Record<string, string> = {};
     for (const column of financialColumns) {
       amountColumns[column.label] = formatCurrency(
@@ -189,6 +249,7 @@ export default async function ExpensesPage({
     return {
       Function: row.functionArea || "",
       Department: row.department || "",
+      "Sub Category": row.category2 || "",
       "Line Item": row.lineItem || "",
       Account: row.objectCode || "",
       ...amountColumns,

@@ -1,15 +1,25 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { groupAndSum, detectCurrentAndPreviousYear } from "@/lib/aggregator";
-import { formatCurrency, abbreviateCurrency } from "@/lib/format";
+import { preferredRowsForYear } from "@/lib/financial-series";
+import {
+  formatCurrency,
+  abbreviateCurrency,
+  calculateChange,
+  formatPercent,
+} from "@/lib/format";
 import PrintButton from "@/components/portal/PrintButton";
+import BudgetBookControls from "@/components/portal/BudgetBookControls";
 
 export default async function BudgetBookPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ townSlug: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { townSlug } = await params;
+  const query = await searchParams;
   const town = await prisma.town.findUnique({ where: { slug: townSlug } });
   if (!town || !town.published) return notFound();
 
@@ -49,6 +59,38 @@ export default async function BudgetBookPage({
   const expensesByFunction = groupAndSum(currentExpenses, "functionArea");
   const revenuesByCategory = groupAndSum(currentRevenues, "category1");
 
+  const hasPriorExpenses = expYears.previousYear !== null;
+  const hasPriorRevenues = revYears.previousYear !== null;
+  const hasAnyPriorYear = hasPriorExpenses || hasPriorRevenues;
+
+  const compareParam = Array.isArray(query.compare) ? query.compare[0] : query.compare;
+  const expenseDetailParam = Array.isArray(query.expenseDetail)
+    ? query.expenseDetail[0]
+    : query.expenseDetail;
+  const revenueDetailParam = Array.isArray(query.revenueDetail)
+    ? query.revenueDetail[0]
+    : query.revenueDetail;
+
+  const showExpenseComparison = hasPriorExpenses && compareParam !== "0";
+  const showRevenueComparison = hasPriorRevenues && compareParam !== "0";
+  const showExpenseDetail = expenseDetailParam !== "0";
+  const showRevenueDetail = revenueDetailParam !== "0";
+
+  const previousExpenses = expYears.previousYear
+    ? preferredRowsForYear(allExpenses, expYears.previousYear)
+    : [];
+  const previousRevenues = revYears.previousYear
+    ? preferredRowsForYear(allRevenues, revYears.previousYear)
+    : [];
+
+  const previousExpensesByFunction = groupAndSum(previousExpenses, "functionArea");
+  const previousRevenuesByCategory = groupAndSum(previousRevenues, "category1");
+
+  const totalPreviousExpenses = previousExpenses.reduce((s, r) => s + r.amount, 0);
+  const totalPreviousRevenues = previousRevenues.reduce((s, r) => s + r.amount, 0);
+  const expensesTotalChange = calculateChange(totalPreviousExpenses, totalExpenses);
+  const revenuesTotalChange = calculateChange(totalPreviousRevenues, totalRevenues);
+
   const expFnGroups = new Map<string, Map<string, typeof currentExpenses>>();
   for (const row of currentExpenses) {
     const fn = row.functionArea || "Other";
@@ -69,16 +111,19 @@ export default async function BudgetBookPage({
   return (
     <div className="bg-white min-h-screen">
       <div className="no-print bg-gray-50 border-b border-gray-200 py-4 px-6">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <p className="text-sm font-medium text-gray-800">
-              {town.name} Budget Book
-            </p>
-            <p className="text-xs text-gray-500 mt-0.5">
-              This is a printable version of the full budget.
-            </p>
+        <div className="max-w-4xl mx-auto flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium text-gray-800">
+                {town.name} Budget Book
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                This is a printable version of the full budget.
+              </p>
+            </div>
+            <PrintButton />
           </div>
-          <PrintButton />
+          <BudgetBookControls showCompareOption={hasAnyPriorYear} />
         </div>
       </div>
 
@@ -109,7 +154,7 @@ export default async function BudgetBookPage({
         {/* Executive Summary */}
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 pb-2 border-b-2" style={{ borderColor: town.primaryColor }}>
-            Executive Summary
+            Executive Summary — FY{currentYear}
           </h2>
           <div className="grid grid-cols-3 gap-6 mt-6">
             <div className="text-center p-4 bg-gray-50 rounded-lg">
@@ -136,71 +181,117 @@ export default async function BudgetBookPage({
             <thead>
               <tr className="border-b-2 border-gray-300">
                 <th scope="col" className="text-left py-2 font-semibold">Function Area</th>
+                {showExpenseComparison && (
+                  <th scope="col" className="text-right py-2 font-semibold">
+                    FY{expYears.previousYear} Budget
+                  </th>
+                )}
                 <th scope="col" className="text-right py-2 font-semibold">FY{currentYear} Budget</th>
-                <th scope="col" className="text-right py-2 font-semibold">% of Total</th>
+                {showExpenseComparison ? (
+                  <th scope="col" className="text-right py-2 font-semibold">Change</th>
+                ) : (
+                  <th scope="col" className="text-right py-2 font-semibold">% of Total</th>
+                )}
               </tr>
             </thead>
             <tbody>
               {Object.entries(expensesByFunction)
                 .sort((a, b) => b[1] - a[1])
-                .map(([fn, amount]) => (
-                  <tr key={fn} className="border-b border-gray-100">
-                    <td className="py-2">{fn}</td>
-                    <td className="py-2 text-right tabular-nums">{formatCurrency(amount)}</td>
-                    <td className="py-2 text-right tabular-nums">
-                      {totalExpenses > 0 ? ((amount / totalExpenses) * 100).toFixed(1) : 0}%
-                    </td>
-                  </tr>
-                ))}
+                .map(([fn, amount]) => {
+                  const prevAmount = previousExpensesByFunction[fn] || 0;
+                  const change = calculateChange(prevAmount, amount);
+                  return (
+                    <tr key={fn} className="border-b border-gray-100">
+                      <td className="py-2">{fn}</td>
+                      {showExpenseComparison && (
+                        <td className="py-2 text-right tabular-nums text-gray-500">
+                          {formatCurrency(prevAmount)}
+                        </td>
+                      )}
+                      <td className="py-2 text-right tabular-nums">{formatCurrency(amount)}</td>
+                      {showExpenseComparison ? (
+                        <td
+                          className={`py-2 text-right tabular-nums ${
+                            change.absolute >= 0 ? "text-emerald-600" : "text-red-600"
+                          }`}
+                        >
+                          {formatCurrency(change.absolute)} ({formatPercent(change.percent)})
+                        </td>
+                      ) : (
+                        <td className="py-2 text-right tabular-nums">
+                          {totalExpenses > 0 ? ((amount / totalExpenses) * 100).toFixed(1) : 0}%
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
               <tr className="border-t-2 border-gray-300 font-bold">
                 <td className="py-2">Total</td>
+                {showExpenseComparison && (
+                  <td className="py-2 text-right tabular-nums">
+                    {formatCurrency(totalPreviousExpenses)}
+                  </td>
+                )}
                 <td className="py-2 text-right tabular-nums">{formatCurrency(totalExpenses)}</td>
-                <td className="py-2 text-right">100%</td>
+                {showExpenseComparison ? (
+                  <td
+                    className={`py-2 text-right tabular-nums ${
+                      expensesTotalChange.absolute >= 0 ? "text-emerald-600" : "text-red-600"
+                    }`}
+                  >
+                    {formatCurrency(expensesTotalChange.absolute)} (
+                    {formatPercent(expensesTotalChange.percent)})
+                  </td>
+                ) : (
+                  <td className="py-2 text-right">100%</td>
+                )}
               </tr>
             </tbody>
           </table>
         </section>
 
         {/* Detailed Expenses */}
-        <section className="mb-12 page-break">
-          <h2 className="text-2xl font-semibold mb-4 pb-2 border-b-2" style={{ borderColor: town.primaryColor }}>
-            Detailed Expense Budget
-          </h2>
-          {[...expFnGroups.entries()].map(([fn, deptMap]) => {
-            const fnTotal = [...deptMap.values()].flat().reduce((s, r) => s + r.amount, 0);
-            return (
-              <div key={fn} className="mb-8">
-                <h3 className="text-lg font-semibold mt-6 mb-2" style={{ color: town.primaryColor }}>
-                  {fn} — {formatCurrency(fnTotal)}
-                </h3>
-                {[...deptMap.entries()].map(([dept, rows]) => {
-                  const deptTotal = rows.reduce((s, r) => s + r.amount, 0);
-                  return (
-                    <div key={dept} className="mb-4">
-                      <h4 className="text-sm font-semibold text-gray-700 mb-1 ml-4">
-                        {dept} — {formatCurrency(deptTotal)}
-                      </h4>
-                      <table className="w-full text-xs ml-8">
-                        <tbody>
-                          {rows.map((row) => (
-                            <tr key={row.id} className="border-b border-gray-50">
-                              <td className="py-1 text-gray-600">
-                                {row.lineItem || row.objectCode || "—"}
-                              </td>
-                              <td className="py-1 text-right tabular-nums w-32">
-                                {formatCurrency(row.amount)}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </section>
+        {showExpenseDetail && (
+          <section className="mb-12 page-break">
+            <h2 className="text-2xl font-semibold mb-4 pb-2 border-b-2" style={{ borderColor: town.primaryColor }}>
+              Detailed Expense Budget
+            </h2>
+            {[...expFnGroups.entries()].map(([fn, deptMap]) => {
+              const fnTotal = [...deptMap.values()].flat().reduce((s, r) => s + r.amount, 0);
+              return (
+                <div key={fn} className="mb-8">
+                  <h3 className="text-lg font-semibold mt-6 mb-2" style={{ color: town.primaryColor }}>
+                    {fn} — {formatCurrency(fnTotal)}
+                  </h3>
+                  {[...deptMap.entries()].map(([dept, rows]) => {
+                    const deptTotal = rows.reduce((s, r) => s + r.amount, 0);
+                    return (
+                      <div key={dept} className="mb-4">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-1 ml-4">
+                          {dept} — {formatCurrency(deptTotal)}
+                        </h4>
+                        <table className="w-full text-xs ml-8">
+                          <tbody>
+                            {rows.map((row) => (
+                              <tr key={row.id} className="border-b border-gray-50">
+                                <td className="py-1 text-gray-600">
+                                  {row.lineItem || row.objectCode || "—"}
+                                </td>
+                                <td className="py-1 text-right tabular-nums w-32">
+                                  {formatCurrency(row.amount)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </section>
+        )}
 
         {/* Revenue Summary */}
         <section className="mb-12 page-break">
@@ -211,61 +302,107 @@ export default async function BudgetBookPage({
             <thead>
               <tr className="border-b-2 border-gray-300">
                 <th scope="col" className="text-left py-2 font-semibold">Category</th>
+                {showRevenueComparison && (
+                  <th scope="col" className="text-right py-2 font-semibold">
+                    FY{revYears.previousYear} Budget
+                  </th>
+                )}
                 <th scope="col" className="text-right py-2 font-semibold">FY{revYears.currentYear} Budget</th>
-                <th scope="col" className="text-right py-2 font-semibold">% of Total</th>
+                {showRevenueComparison ? (
+                  <th scope="col" className="text-right py-2 font-semibold">Change</th>
+                ) : (
+                  <th scope="col" className="text-right py-2 font-semibold">% of Total</th>
+                )}
               </tr>
             </thead>
             <tbody>
               {Object.entries(revenuesByCategory)
                 .sort((a, b) => b[1] - a[1])
-                .map(([cat, amount]) => (
-                  <tr key={cat} className="border-b border-gray-100">
-                    <td className="py-2">{cat}</td>
-                    <td className="py-2 text-right tabular-nums">{formatCurrency(amount)}</td>
-                    <td className="py-2 text-right tabular-nums">
-                      {totalRevenues > 0 ? ((amount / totalRevenues) * 100).toFixed(1) : 0}%
-                    </td>
-                  </tr>
-                ))}
+                .map(([cat, amount]) => {
+                  const prevAmount = previousRevenuesByCategory[cat] || 0;
+                  const change = calculateChange(prevAmount, amount);
+                  return (
+                    <tr key={cat} className="border-b border-gray-100">
+                      <td className="py-2">{cat}</td>
+                      {showRevenueComparison && (
+                        <td className="py-2 text-right tabular-nums text-gray-500">
+                          {formatCurrency(prevAmount)}
+                        </td>
+                      )}
+                      <td className="py-2 text-right tabular-nums">{formatCurrency(amount)}</td>
+                      {showRevenueComparison ? (
+                        <td
+                          className={`py-2 text-right tabular-nums ${
+                            change.absolute >= 0 ? "text-emerald-600" : "text-red-600"
+                          }`}
+                        >
+                          {formatCurrency(change.absolute)} ({formatPercent(change.percent)})
+                        </td>
+                      ) : (
+                        <td className="py-2 text-right tabular-nums">
+                          {totalRevenues > 0 ? ((amount / totalRevenues) * 100).toFixed(1) : 0}%
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
               <tr className="border-t-2 border-gray-300 font-bold">
                 <td className="py-2">Total</td>
+                {showRevenueComparison && (
+                  <td className="py-2 text-right tabular-nums">
+                    {formatCurrency(totalPreviousRevenues)}
+                  </td>
+                )}
                 <td className="py-2 text-right tabular-nums">{formatCurrency(totalRevenues)}</td>
-                <td className="py-2 text-right">100%</td>
+                {showRevenueComparison ? (
+                  <td
+                    className={`py-2 text-right tabular-nums ${
+                      revenuesTotalChange.absolute >= 0 ? "text-emerald-600" : "text-red-600"
+                    }`}
+                  >
+                    {formatCurrency(revenuesTotalChange.absolute)} (
+                    {formatPercent(revenuesTotalChange.percent)})
+                  </td>
+                ) : (
+                  <td className="py-2 text-right">100%</td>
+                )}
               </tr>
             </tbody>
           </table>
         </section>
 
         {/* Detailed Revenues */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4 pb-2 border-b-2" style={{ borderColor: town.primaryColor }}>
-            Detailed Revenue Budget
-          </h2>
-          {[...revCatGroups.entries()].map(([cat, rows]) => {
-            const catTotal = rows.reduce((s, r) => s + r.amount, 0);
-            return (
-              <div key={cat} className="mb-6">
-                <h3 className="text-lg font-semibold mt-4 mb-2" style={{ color: town.primaryColor }}>
-                  {cat} — {formatCurrency(catTotal)}
-                </h3>
-                <table className="w-full text-xs ml-4">
-                  <tbody>
-                    {rows.map((row) => (
-                      <tr key={row.id} className="border-b border-gray-50">
-                        <td className="py-1 text-gray-600">
-                          {row.lineItem || row.category2 || "—"}
-                        </td>
-                        <td className="py-1 text-right tabular-nums w-32">
-                          {formatCurrency(row.amount)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            );
-          })}
-        </section>
+        {showRevenueDetail && (
+          <section className="mb-12">
+            <h2 className="text-2xl font-semibold mb-4 pb-2 border-b-2" style={{ borderColor: town.primaryColor }}>
+              Detailed Revenue Budget
+            </h2>
+            {[...revCatGroups.entries()].map(([cat, rows]) => {
+              const catTotal = rows.reduce((s, r) => s + r.amount, 0);
+              return (
+                <div key={cat} className="mb-6">
+                  <h3 className="text-lg font-semibold mt-4 mb-2" style={{ color: town.primaryColor }}>
+                    {cat} — {formatCurrency(catTotal)}
+                  </h3>
+                  <table className="w-full text-xs ml-4">
+                    <tbody>
+                      {rows.map((row) => (
+                        <tr key={row.id} className="border-b border-gray-50">
+                          <td className="py-1 text-gray-600">
+                            {row.lineItem || row.category2 || "—"}
+                          </td>
+                          <td className="py-1 text-right tabular-nums w-32">
+                            {formatCurrency(row.amount)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })}
+          </section>
+        )}
 
         {/* Capital Projects */}
         {currentCapital.length > 0 && (
@@ -273,27 +410,27 @@ export default async function BudgetBookPage({
             <h2 className="text-2xl font-semibold mb-4 pb-2 border-b-2" style={{ borderColor: town.primaryColor }}>
               Capital Projects — FY{currentYear}
             </h2>
-            <table className="w-full text-sm mt-4">
+            <table className="w-full text-sm mt-4 table-fixed">
               <thead>
                 <tr className="border-b-2 border-gray-300">
-                  <th scope="col" className="text-left py-2 font-semibold">Department</th>
-                  <th scope="col" className="text-left py-2 font-semibold">Purpose</th>
-                  <th scope="col" className="text-right py-2 font-semibold">Amount</th>
-                  <th scope="col" className="text-left py-2 font-semibold">Funding Source</th>
+                  <th scope="col" className="text-left py-2 pr-2 font-semibold w-[20%] break-words">Department</th>
+                  <th scope="col" className="text-left py-2 pr-2 font-semibold w-[35%] break-words">Purpose</th>
+                  <th scope="col" className="text-right py-2 pr-2 font-semibold w-[20%] break-words">Amount</th>
+                  <th scope="col" className="text-left py-2 font-semibold w-[25%] break-words">Funding Source</th>
                 </tr>
               </thead>
               <tbody>
                 {currentCapital.map((row) => (
                   <tr key={row.id} className="border-b border-gray-100">
-                    <td className="py-2 font-medium">{row.department || "Other"}</td>
-                    <td className="py-2">{row.purpose || "—"}</td>
-                    <td className="py-2 text-right tabular-nums">{formatCurrency(row.amount)}</td>
-                    <td className="py-2">{row.fundingSource || "—"}</td>
+                    <td className="py-2 pr-2 font-medium align-top break-words">{row.department || "Other"}</td>
+                    <td className="py-2 pr-2 align-top break-words">{row.purpose || "—"}</td>
+                    <td className="py-2 pr-2 text-right tabular-nums align-top break-words">{formatCurrency(row.amount)}</td>
+                    <td className="py-2 align-top break-words">{row.fundingSource || "—"}</td>
                   </tr>
                 ))}
                 <tr className="border-t-2 border-gray-300 font-bold">
-                  <td className="py-2" colSpan={2}>Total Capital</td>
-                  <td className="py-2 text-right tabular-nums">{formatCurrency(totalCapital)}</td>
+                  <td className="py-2 break-words" colSpan={2}>Total Capital</td>
+                  <td className="py-2 text-right tabular-nums break-words">{formatCurrency(totalCapital)}</td>
                   <td></td>
                 </tr>
               </tbody>

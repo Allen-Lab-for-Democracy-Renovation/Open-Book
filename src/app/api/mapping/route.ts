@@ -10,10 +10,11 @@ export async function POST(request: Request) {
   if (admin instanceof NextResponse) return admin;
 
   const body = await request.json();
-  const { uploadId, mappings, rawData } = body as {
+  const { uploadId, mappings, rawData, confirmReplace } = body as {
     uploadId: string;
     mappings: ColumnMappingInput[];
     rawData: Record<string, string>[];
+    confirmReplace?: boolean;
   };
 
   if (!uploadId || !mappings || !rawData) {
@@ -58,15 +59,49 @@ export async function POST(request: Request) {
     rows: rawData,
   }).rows;
   const normalized = stripZeroAmountRows(normalizeRows(cleanedData, mappings));
+  const incomingYears = [...new Set(normalized.map((r) => r.fiscalYear))];
+
+  // Deduplicate: remove existing rows from OTHER uploads that share the same
+  // town + category + fiscal year(s) to prevent duplication when the same
+  // year is uploaded incrementally. Since this can delete data that came
+  // from a completely different upload than the one being confirmed, check
+  // for conflicts first and require explicit confirmation before doing so.
+  const conflictingRows = await prisma.budgetRow.findMany({
+    where: {
+      townId: upload.townId,
+      dataCategory: upload.dataCategory,
+      fiscalYear: { in: incomingYears },
+      uploadId: { not: uploadId },
+    },
+    select: { uploadId: true, fiscalYear: true },
+  });
+
+  if (conflictingRows.length > 0 && !confirmReplace) {
+    const otherUploadIds = [...new Set(conflictingRows.map((r) => r.uploadId))];
+    const otherUploads = await prisma.upload.findMany({
+      where: { id: { in: otherUploadIds } },
+      select: { id: true, fileName: true },
+    });
+    return NextResponse.json(
+      {
+        requiresConfirmation: true,
+        affected: {
+          rowCount: conflictingRows.length,
+          fiscalYears: [...new Set(conflictingRows.map((r) => r.fiscalYear))].sort(),
+          sources: otherUploads.map((u) => ({
+            uploadId: u.id,
+            fileName: u.fileName,
+          })),
+        },
+      },
+      { status: 409 }
+    );
+  }
 
   // Delete existing rows for this upload
   await prisma.budgetRow.deleteMany({ where: { uploadId } });
 
-  // Deduplicate: remove existing rows from OTHER uploads that share the same
-  // town + category + fiscal year(s) to prevent duplication when the same
-  // year is uploaded incrementally.
-  if (normalized.length > 0) {
-    const incomingYears = [...new Set(normalized.map((r) => r.fiscalYear))];
+  if (conflictingRows.length > 0) {
     await prisma.budgetRow.deleteMany({
       where: {
         townId: upload.townId,

@@ -8,13 +8,15 @@ import {
 } from "@/lib/aggregator";
 import {
   buildFinancialColumns,
+  preferredColumnForYear,
   preferredRowsForYear,
   rowsForFinancialColumn,
 } from "@/lib/financial-series";
-import { formatCurrency } from "@/lib/format";
+import { calculateChange, formatCurrency, formatPercent } from "@/lib/format";
 import SummaryTiles from "@/components/portal/SummaryTiles";
 import PieChart from "@/components/portal/PieChart";
-import BarChart from "@/components/portal/BarChart";
+import QuickStats from "@/components/portal/QuickStats";
+import TrendDrilldownChart from "@/components/portal/TrendDrilldownChart";
 import BudgetTable from "@/components/portal/BudgetTable";
 import ExportButton from "@/components/portal/ExportButton";
 
@@ -50,12 +52,33 @@ export default async function RevenuesPage({
     ? preferredRowsForYear(allRows, previousYear)
     : [];
   const hasPriorYear = previousYear !== null && previous.length > 0;
-  const tiles = buildRevenueSummaryTiles(current, previous);
   const byCategory = toChartData(groupAndSum(current, "category1"));
+
+  const yearRangeLabel = `FY${previousYear} – FY${currentYear}`;
+  const totalChange = calculateChange(
+    previous.reduce((sum, row) => sum + row.amount, 0),
+    current.reduce((sum, row) => sum + row.amount, 0)
+  );
+  const tiles = [
+    ...buildRevenueSummaryTiles(current, previous).slice(0, 2),
+    ...(hasPriorYear
+      ? [
+          {
+            label: `$ Change (${yearRangeLabel})`,
+            value: formatCurrency(totalChange.absolute),
+          },
+          {
+            label: `% Change (${yearRangeLabel})`,
+            value: formatPercent(totalChange.percent),
+          },
+        ]
+      : []),
+  ];
 
   const years = allYears.length > 0 ? allYears : [currentYear];
   const categories = [...new Set(current.map((row) => row.category1 || "Other"))];
-  const trendSeries = categories.slice(0, 8).map((category) => ({
+  const topCategories = categories.slice(0, 8);
+  const trendSeries = topCategories.map((category) => ({
     label: category,
     data: years.map((year) =>
       preferredRowsForYear(allRows, year)
@@ -63,6 +86,71 @@ export default async function RevenuesPage({
         .reduce((sum, row) => sum + row.amount, 0)
     ),
   }));
+
+  const subcategorySeriesByCategory: Record<
+    string,
+    { label: string; data: number[] }[]
+  > = {};
+  for (const category of topCategories) {
+    const categoryRows = allRows.filter(
+      (row) => (row.category1 || "Other") === category
+    );
+    const subcategories = [
+      ...new Set(categoryRows.map((row) => row.category2 || "Other")),
+    ];
+    subcategorySeriesByCategory[category] = subcategories
+      .slice(0, 8)
+      .map((subcategory) => ({
+        label: subcategory,
+        data: years.map((year) =>
+          preferredRowsForYear(categoryRows, year)
+            .filter((row) => (row.category2 || "Other") === subcategory)
+            .reduce((sum, row) => sum + row.amount, 0)
+        ),
+      }));
+  }
+
+  const revenueTotal = current.reduce((sum, row) => sum + row.amount, 0);
+  const categoryEntries = Object.entries(
+    groupAndSum(current, "category1")
+  ).sort((a, b) => b[1] - a[1]);
+  const quickStats = [
+    {
+      label: "Categories tracked",
+      value: categoryEntries.length.toString(),
+    },
+    ...(categoryEntries[0]
+      ? [
+          {
+            label: "Top source",
+            value: categoryEntries[0][0],
+            detail: `${((categoryEntries[0][1] / revenueTotal) * 100).toFixed(1)}% · ${formatCurrency(categoryEntries[0][1])}`,
+          },
+        ]
+      : []),
+    ...(categoryEntries[1]
+      ? [
+          {
+            label: "Second largest",
+            value: categoryEntries[1][0],
+            detail: `${((categoryEntries[1][1] / revenueTotal) * 100).toFixed(1)}% · ${formatCurrency(categoryEntries[1][1])}`,
+          },
+        ]
+      : []),
+  ];
+
+  const previousColumn = previousYear
+    ? preferredColumnForYear(allRows, previousYear)
+    : null;
+  const currentColumn = preferredColumnForYear(allRows, currentYear);
+  const comparisonConfig =
+    hasPriorYear && previousColumn && currentColumn
+      ? {
+          fromKey: previousColumn.key,
+          toKey: currentColumn.key,
+          label: `% Change (${yearRangeLabel})`,
+        }
+      : undefined;
 
   type TableRow = {
     id: string;
@@ -209,9 +297,6 @@ export default async function RevenuesPage({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Revenues</h1>
-          <p className="text-gray-600 mt-1">
-            FY{currentYear} adopted budget · {current.length} line items
-          </p>
         </div>
         <ExportButton
           data={exportData}
@@ -221,31 +306,54 @@ export default async function RevenuesPage({
 
       <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
         <p className="text-sm text-emerald-800 leading-relaxed">
-          <strong>Understanding revenue:</strong> Budget columns show expected
-          revenue. Actual columns show recorded collections when published.
-          Keeping the series separate makes it possible to compare the plan
-          with the result.
+          <strong>How to read this page:</strong> The summary tiles show the
+          big picture — total revenue, the top source, and how it changed
+          from last year. Budget columns show expected revenue and Actual
+          columns show recorded collections when published; they&apos;re kept
+          separate so planned and recorded amounts are never added together.
+          The charts below break revenue down visually, and further down is
+          a searchable table with every source — look for the{" "}
+          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-300 text-gray-600 text-[10px] font-bold">
+            ?
+          </span>{" "}
+          icon next to items for a plain-language explanation.
           {hasPriorYear
-            ? " Summary changes use the prior budget, or the prior actual amount when no budget was published."
+            ? " The % Change column compares the latest adopted budget with the prior year's budget, or its actual amount when no budget was published."
             : ""}
         </p>
       </div>
 
       <SummaryTiles tiles={tiles} tooltips={categoryTooltips} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <PieChart
-          data={byCategory}
-          title={`FY${currentYear} Revenue by Category`}
-          townColor={town.primaryColor}
-        />
-        <BarChart
+      <section>
+        <h2 className="text-lg font-medium">How Revenue Is Raised</h2>
+        <p className="text-sm text-gray-600 mt-1 mb-4">
+          FY{currentYear} revenue by category
+        </p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <PieChart
+            data={byCategory}
+            title={`FY${currentYear} Revenue by Category`}
+            townColor={town.primaryColor}
+          />
+          <QuickStats title="Overview" stats={quickStats} />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-medium">How Revenue Has Changed</h2>
+        <p className="text-sm text-gray-600 mt-1 mb-4">
+          Compare revenue by category across recent fiscal years
+        </p>
+        <TrendDrilldownChart
+          title="Multi-Year Revenue Trend by Category"
           categories={years.map((year) => `FY${year}`)}
-          series={trendSeries}
-          title="Revenue Trend by Category"
-          stacked
+          topSeries={trendSeries}
+          drilldownSeries={subcategorySeriesByCategory}
+          drilldownLabel="Subcategory Revenue"
+          drilldownHint="Click a bar segment to drill into subcategories"
         />
-      </div>
+      </section>
 
       <section>
         <h2 className="text-lg font-medium">Revenue Detail Explorer</h2>
@@ -261,6 +369,7 @@ export default async function RevenuesPage({
           seriesColumns={{
             columns: financialColumns.map(({ key, label }) => ({ key, label })),
             defaultSelectedKeys: financialColumns.map(({ key }) => key),
+            comparison: comparisonConfig,
           }}
         />
       </section>

@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { toChartData } from "@/lib/aggregator";
 import {
   buildReserveSeries,
   createFinancialColumn,
@@ -11,8 +10,9 @@ import {
   formatCurrency,
   formatPercent,
 } from "@/lib/format";
-import BarChart from "@/components/portal/BarChart";
-import BreakdownToggle from "@/components/portal/BreakdownToggle";
+import PieChart from "@/components/portal/PieChart";
+import QuickStats from "@/components/portal/QuickStats";
+import TrendDrilldownChart from "@/components/portal/TrendDrilldownChart";
 import BudgetTable from "@/components/portal/BudgetTable";
 import ExportButton from "@/components/portal/ExportButton";
 import SummaryTiles from "@/components/portal/SummaryTiles";
@@ -60,36 +60,37 @@ export default async function ReservesPage({
   const previousTotal = series.previousYear
     ? series.totalsByYear[series.previousYear] || 0
     : null;
+  const hasPriorYear = previousTotal !== null && previousTotal !== 0;
+  const yearRangeLabel = `FY${series.previousYear} – FY${latestYear}`;
   const largestFund = series.funds[0];
+
   const tiles: SummaryTile[] = [
     {
       label: `FY${latestYear} Total Reserves`,
       value: abbreviateCurrency(latestTotal),
     },
     { label: "Largest Reserve Fund", value: largestFund?.name || "N/A" },
-    { label: "Funds Tracked", value: series.funds.length.toString() },
+    ...(hasPriorYear && previousTotal !== null
+      ? (() => {
+          const change = calculateChange(previousTotal, latestTotal);
+          return [
+            {
+              label: `$ Change (${yearRangeLabel})`,
+              value: formatCurrency(change.absolute),
+            },
+            {
+              label: `% Change (${yearRangeLabel})`,
+              value: formatPercent(change.percent),
+            },
+          ];
+        })()
+      : []),
   ];
-
-  if (previousTotal !== null && previousTotal !== 0) {
-    const change = calculateChange(previousTotal, latestTotal);
-    tiles.push({
-      label: "Change from Previous Year",
-      value: formatPercent(change.percent),
-      change: formatCurrency(change.absolute),
-      changeType: change.percent >= 0 ? "positive" : "negative",
-    });
-  } else {
-    tiles.push({
-      label: "Fiscal Years",
-      value: series.years.length.toString(),
-    });
-  }
 
   const fundData = {
     labels: series.funds.map((fund) => fund.name),
     values: series.funds.map((fund) => fund.balances[latestYear] || 0),
   };
-  const categoryData = toChartData(series.categories);
   const trendSeries = series.funds.slice(0, 8).map((fund) => ({
     label: fund.name,
     data: series.years.map((year) => fund.balances[year] || 0),
@@ -115,9 +116,35 @@ export default async function ReservesPage({
           latestYear,
           series.amountTypesByYear[latestYear] || "balance"
         ).key,
-        label: "Change",
+        label: `% Change (${yearRangeLabel})`,
       }
     : undefined;
+
+  const fundEntries = series.funds.map(
+    (fund) => [fund.name, fund.balances[latestYear] || 0] as [string, number]
+  );
+  const quickStats = [
+    { label: "Funds tracked", value: series.funds.length.toString() },
+    ...(fundEntries[0]
+      ? [
+          {
+            label: "Largest fund",
+            value: fundEntries[0][0],
+            detail: `${((fundEntries[0][1] / latestTotal) * 100).toFixed(1)}% · ${formatCurrency(fundEntries[0][1])}`,
+          },
+        ]
+      : []),
+    ...(fundEntries[1]
+      ? [
+          {
+            label: "Second largest",
+            value: fundEntries[1][0],
+            detail: `${((fundEntries[1][1] / latestTotal) * 100).toFixed(1)}% · ${formatCurrency(fundEntries[1][1])}`,
+          },
+        ]
+      : []),
+  ];
+
   const exportData = series.funds.map((fund) => {
     const balances: Record<string, string> = {};
     for (const column of reserveColumns) {
@@ -139,9 +166,6 @@ export default async function ReservesPage({
           <h1 className="text-2xl font-semibold tracking-tight">
             Reserves &amp; Stabilization
           </h1>
-          <p className="text-gray-600 mt-1">
-            {series.funds.length} funds · {series.years.length} fiscal years
-          </p>
         </div>
         <ExportButton
           data={exportData}
@@ -151,32 +175,47 @@ export default async function ReservesPage({
 
       <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-4">
         <p className="text-sm text-cyan-900 leading-relaxed">
-          <strong>Understanding reserves:</strong> Reserve, stabilization, free
-          cash, and retained earnings balances help a municipality respond to
-          unexpected costs, plan capital investments, and reduce reliance on
-          short-term borrowing.
+          <strong>How to read this page:</strong> The summary tiles show the
+          big picture — total reserves, the largest fund, and how it changed
+          from last year. Reserve, stabilization, free cash, and retained
+          earnings balances help a municipality respond to unexpected costs,
+          plan capital investments, and reduce reliance on short-term
+          borrowing. The chart below breaks reserves down visually, and
+          further down is a searchable table with every fund&apos;s
+          published balance by year.
         </p>
       </div>
 
       <SummaryTiles tiles={tiles} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <BreakdownToggle
-          title="Reserve Composition"
-          subtitle={`FY${latestYear} published balances`}
-          primaryLabel="By Fund"
-          primaryData={fundData}
-          secondaryLabel="By Category"
-          secondaryData={categoryData}
-          townColor={town.primaryColor}
-        />
-        <BarChart
+      <section>
+        <h2 className="text-lg font-medium">Reserve Composition</h2>
+        <p className="text-sm text-gray-600 mt-1 mb-4">
+          FY{latestYear} published balances by fund
+        </p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <PieChart
+            data={fundData}
+            title={`FY${latestYear} Reserves by Fund`}
+            townColor={town.primaryColor}
+          />
+          <QuickStats title="Overview" stats={quickStats} />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-medium">Reserve Balance Trend</h2>
+        <p className="text-sm text-gray-600 mt-1 mb-4">
+          Compare published balances across recent fiscal years
+        </p>
+        <TrendDrilldownChart
+          title="Multi-Year Reserve Balance Trend"
           categories={series.years.map((year) => `FY${year}`)}
-          series={trendSeries}
-          title="Reserve Balance Trend"
-          stacked
+          topSeries={trendSeries}
+          drilldownSeries={{}}
+          drilldownLabel=""
         />
-      </div>
+      </section>
 
       <section>
         <h2 className="text-lg font-medium">Reserve Fund Detail</h2>

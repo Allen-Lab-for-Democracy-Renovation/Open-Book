@@ -8,13 +8,15 @@ import {
 } from "@/lib/aggregator";
 import {
   buildFinancialColumns,
+  preferredColumnForYear,
   preferredRowsForYear,
   rowsForFinancialColumn,
 } from "@/lib/financial-series";
-import { formatCurrency } from "@/lib/format";
+import { calculateChange, formatCurrency, formatPercent } from "@/lib/format";
 import SummaryTiles from "@/components/portal/SummaryTiles";
 import PieChart from "@/components/portal/PieChart";
-import BarChart from "@/components/portal/BarChart";
+import QuickStats from "@/components/portal/QuickStats";
+import TrendDrilldownChart from "@/components/portal/TrendDrilldownChart";
 import BudgetTable from "@/components/portal/BudgetTable";
 import ExportButton from "@/components/portal/ExportButton";
 
@@ -53,12 +55,32 @@ export default async function ExpensesPage({
     ? preferredRowsForYear(allRows, previousYear)
     : [];
   const hasPriorYear = previousYear !== null && previous.length > 0;
-  const tiles = buildExpenseSummaryTiles(current, previous);
+  const yearRangeLabel = `FY${previousYear} – FY${currentYear}`;
+  const totalChange = calculateChange(
+    previous.reduce((sum, row) => sum + row.amount, 0),
+    current.reduce((sum, row) => sum + row.amount, 0)
+  );
+  const tiles = [
+    ...buildExpenseSummaryTiles(current, previous).slice(0, 2),
+    ...(hasPriorYear
+      ? [
+          {
+            label: `$ Change (${yearRangeLabel})`,
+            value: formatCurrency(totalChange.absolute),
+          },
+          {
+            label: `% Change (${yearRangeLabel})`,
+            value: formatPercent(totalChange.percent),
+          },
+        ]
+      : []),
+  ];
   const byFunction = toChartData(groupAndSum(current, "functionArea"));
 
   const years = allYears.length > 0 ? allYears : [currentYear];
   const functions = [...new Set(current.map((row) => row.functionArea || "Other"))];
-  const trendSeries = functions.slice(0, 8).map((functionName) => ({
+  const topFunctions = functions.slice(0, 8);
+  const trendSeries = topFunctions.map((functionName) => ({
     label: functionName,
     data: years.map((year) =>
       preferredRowsForYear(allRows, year)
@@ -66,6 +88,71 @@ export default async function ExpensesPage({
         .reduce((sum, row) => sum + row.amount, 0)
     ),
   }));
+
+  const departmentSeriesByFunction: Record<
+    string,
+    { label: string; data: number[] }[]
+  > = {};
+  for (const functionName of topFunctions) {
+    const functionRows = allRows.filter(
+      (row) => (row.functionArea || "Other") === functionName
+    );
+    const departments = [
+      ...new Set(functionRows.map((row) => row.department || "Other")),
+    ];
+    departmentSeriesByFunction[functionName] = departments
+      .slice(0, 8)
+      .map((department) => ({
+        label: department,
+        data: years.map((year) =>
+          preferredRowsForYear(functionRows, year)
+            .filter((row) => (row.department || "Other") === department)
+            .reduce((sum, row) => sum + row.amount, 0)
+        ),
+      }));
+  }
+
+  const expenseTotal = current.reduce((sum, row) => sum + row.amount, 0);
+  const functionEntries = Object.entries(
+    groupAndSum(current, "functionArea")
+  ).sort((a, b) => b[1] - a[1]);
+  const quickStats = [
+    {
+      label: "Function areas tracked",
+      value: functionEntries.length.toString(),
+    },
+    ...(functionEntries[0]
+      ? [
+          {
+            label: "Largest function",
+            value: functionEntries[0][0],
+            detail: `${((functionEntries[0][1] / expenseTotal) * 100).toFixed(1)}% · ${formatCurrency(functionEntries[0][1])}`,
+          },
+        ]
+      : []),
+    ...(functionEntries[1]
+      ? [
+          {
+            label: "Second largest",
+            value: functionEntries[1][0],
+            detail: `${((functionEntries[1][1] / expenseTotal) * 100).toFixed(1)}% · ${formatCurrency(functionEntries[1][1])}`,
+          },
+        ]
+      : []),
+  ];
+
+  const previousColumn = previousYear
+    ? preferredColumnForYear(allRows, previousYear)
+    : null;
+  const currentColumn = preferredColumnForYear(allRows, currentYear);
+  const comparisonConfig =
+    hasPriorYear && previousColumn && currentColumn
+      ? {
+          fromKey: previousColumn.key,
+          toKey: currentColumn.key,
+          label: `% Change (FY${previousYear} – FY${currentYear})`,
+        }
+      : undefined;
 
   type TableRow = {
     id: string;
@@ -261,9 +348,6 @@ export default async function ExpensesPage({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Expenses</h1>
-          <p className="text-gray-600 mt-1">
-            FY{currentYear} adopted budget · {current.length} line items
-          </p>
         </div>
         <ExportButton
           data={exportData}
@@ -273,31 +357,55 @@ export default async function ExpensesPage({
 
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
         <p className="text-sm text-amber-800 leading-relaxed">
-          <strong>How to read this page:</strong> Budget columns show adopted
-          appropriations. Actual columns show recorded spending when published.
-          They remain separate so planned and recorded amounts can be compared
-          without being added together.
+          <strong>How to read this page:</strong> The summary tiles show the
+          big picture — total spending, the largest area, and how it changed
+          from last year. Budget columns show adopted appropriations and
+          Actual columns show recorded spending when published; they&apos;re
+          kept separate so planned and recorded amounts are never added
+          together. The charts below break spending down visually, and
+          further down is a searchable table with every line item — look for
+          the{" "}
+          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-300 text-gray-600 text-[10px] font-bold">
+            ?
+          </span>{" "}
+          icon next to items for a plain-language explanation.
           {hasPriorYear
-            ? " Summary changes compare the latest adopted budget with the prior year's budget, or its actual amount when no budget was published."
+            ? " The % Change column compares the latest adopted budget with the prior year's budget, or its actual amount when no budget was published."
             : ""}
         </p>
       </div>
 
       <SummaryTiles tiles={tiles} tooltips={categoryTooltips} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <PieChart
-          data={byFunction}
-          title={`FY${currentYear} Expenses by Function`}
-          townColor={town.primaryColor}
-        />
-        <BarChart
+      <section>
+        <h2 className="text-lg font-medium">How the Budget Is Allocated</h2>
+        <p className="text-sm text-gray-600 mt-1 mb-4">
+          FY{currentYear} spending by function
+        </p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <PieChart
+            data={byFunction}
+            title={`FY${currentYear} Expenses by Function`}
+            townColor={town.primaryColor}
+          />
+          <QuickStats title="Overview" stats={quickStats} />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-medium">How Spending Has Changed</h2>
+        <p className="text-sm text-gray-600 mt-1 mb-4">
+          Compare operating budget allocations across recent fiscal years
+        </p>
+        <TrendDrilldownChart
+          title="Multi-Year Expense Trend by Function"
           categories={years.map((year) => `FY${year}`)}
-          series={trendSeries}
-          title="Expense Trend by Function"
-          stacked
+          topSeries={trendSeries}
+          drilldownSeries={departmentSeriesByFunction}
+          drilldownLabel="Department Spending"
+          drilldownHint="Click a bar segment to drill into departments"
         />
-      </div>
+      </section>
 
       <section>
         <h2 className="text-lg font-medium">Expense Detail Explorer</h2>
@@ -313,6 +421,7 @@ export default async function ExpensesPage({
           seriesColumns={{
             columns: financialColumns.map(({ key, label }) => ({ key, label })),
             defaultSelectedKeys: financialColumns.map(({ key }) => key),
+            comparison: comparisonConfig,
           }}
         />
       </section>

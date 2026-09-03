@@ -1,22 +1,90 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import {
-  groupAndSum,
-  toChartData,
-  buildExpenseSummaryTiles,
-  buildRevenueSummaryTiles,
-  detectCurrentAndPreviousYear,
-} from "@/lib/aggregator";
-import {
-  buildReserveSeries,
-  preferredRowsForYear,
-} from "@/lib/financial-series";
+import { groupAndSum, toChartData, detectCurrentAndPreviousYear } from "@/lib/aggregator";
+import { buildReserveSeries, preferredRowsForYear } from "@/lib/financial-series";
 import { abbreviateCurrency, formatCurrency } from "@/lib/format";
-import SummaryTiles from "@/components/portal/SummaryTiles";
 import PieChart from "@/components/portal/PieChart";
-import BarChart from "@/components/portal/BarChart";
-import type { SummaryTile } from "@/types";
+
+function AmountTiles({
+  items,
+  color,
+}: {
+  items: [string, number][];
+  color: string;
+}) {
+  return (
+    <div className="space-y-3">
+      {items.map(([label, amount]) => (
+        <div
+          key={label}
+          className="bg-white border border-gray-200 rounded-xl px-5 py-4 flex items-center justify-between gap-4"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span
+              className="w-2.5 h-2.5 rounded-full shrink-0"
+              style={{ backgroundColor: color }}
+            />
+            <p className="text-sm font-medium text-gray-700 truncate">
+              {label}
+            </p>
+          </div>
+          <p className="text-lg font-bold text-gray-900 shrink-0">
+            {formatCurrency(amount)}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SectionIntro({
+  eyebrow,
+  title,
+  subtext,
+  bigNumber,
+  bigNumberLabel,
+  ctaLabel,
+  ctaHref,
+  color,
+}: {
+  eyebrow: string;
+  title: string;
+  subtext: string;
+  bigNumber: string;
+  bigNumberLabel: string;
+  ctaLabel: string;
+  ctaHref: string;
+  color: string;
+}) {
+  return (
+    <div>
+      <p
+        className="text-xs font-semibold uppercase tracking-wide"
+        style={{ color }}
+      >
+        {eyebrow}
+      </p>
+      <h2 className="text-3xl font-bold text-gray-900 tracking-tight mt-2 mb-4">
+        {title}
+      </h2>
+      <p className="text-gray-600 leading-relaxed mb-6 max-w-md">{subtext}</p>
+      <div className="border-l-4 pl-4 mb-6" style={{ borderColor: color }}>
+        <p className="text-3xl font-bold text-gray-900">{bigNumber}</p>
+        <p className="text-xs uppercase tracking-wide text-gray-500 mt-1">
+          {bigNumberLabel}
+        </p>
+      </div>
+      <Link
+        href={ctaHref}
+        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+        style={{ backgroundColor: color }}
+      >
+        {ctaLabel} →
+      </Link>
+    </div>
+  );
+}
 
 export default async function DashboardPage({
   params,
@@ -27,96 +95,99 @@ export default async function DashboardPage({
   const town = await prisma.town.findUnique({ where: { slug: townSlug } });
   if (!town) return notFound();
 
-  const [tooltipRows, expenseRows, revenueRows, capitalRows, reserveRows] =
-    await Promise.all([
-      prisma.tooltip.findMany({
-        where: { townId: town.id, scope: "category" },
-      }),
-      prisma.budgetRow.findMany({
-        where: { townId: town.id, dataCategory: "expenses" },
-      }),
-      prisma.budgetRow.findMany({
-        where: { townId: town.id, dataCategory: "revenues" },
-      }),
-      prisma.budgetRow.findMany({
-        where: { townId: town.id, dataCategory: "capital" },
-      }),
-      prisma.budgetRow.findMany({
-        where: { townId: town.id, dataCategory: "reserves" },
-      }),
-    ]);
-  const categoryTooltips: Record<string, string> = {};
-  for (const tooltip of tooltipRows) {
-    categoryTooltips[tooltip.key] = tooltip.text;
+  const [expenseRows, revenueRows, capitalRows, reserveRows] = await Promise.all([
+    prisma.budgetRow.findMany({
+      where: { townId: town.id, dataCategory: "expenses" },
+    }),
+    prisma.budgetRow.findMany({
+      where: { townId: town.id, dataCategory: "revenues" },
+    }),
+    prisma.budgetRow.findMany({
+      where: { townId: town.id, dataCategory: "capital" },
+    }),
+    prisma.budgetRow.findMany({
+      where: { townId: town.id, dataCategory: "reserves" },
+    }),
+  ]);
+
+  const hasAnyData =
+    expenseRows.length > 0 ||
+    revenueRows.length > 0 ||
+    capitalRows.length > 0 ||
+    reserveRows.length > 0;
+
+  if (!hasAnyData) {
+    return (
+      <div className="-mx-4 sm:-mx-6 lg:-mx-8 -mt-8">
+        <section
+          className="px-4 sm:px-6 lg:px-8 py-24"
+          style={{
+            background: `linear-gradient(135deg, ${town.primaryColor}, #111827)`,
+          }}
+        >
+          <div className="max-w-2xl mx-auto text-center">
+            <h1 className="text-4xl sm:text-5xl font-bold text-white tracking-tight leading-tight mb-4">
+              A Clearer View of {town.name}&apos;s Finances.
+            </h1>
+            <p className="text-white/80 text-base sm:text-lg leading-relaxed max-w-xl mx-auto">
+              This budget portal is being set up. Once {town.name} publishes
+              budget data, expenses, revenues, and capital investments will
+              appear here.
+            </p>
+            {town.contactEmail && (
+              <p className="text-white/60 text-sm mt-6">
+                Questions in the meantime? Contact{" "}
+                <a
+                  href={`mailto:${town.contactEmail}`}
+                  className="underline"
+                >
+                  {town.contactEmail}
+                </a>
+                .
+              </p>
+            )}
+          </div>
+        </section>
+      </div>
+    );
   }
 
-  const { currentYear, previousYear, allYears } =
-    detectCurrentAndPreviousYear(expenseRows);
+  const { currentYear } = detectCurrentAndPreviousYear(expenseRows);
   const currentExpenses = preferredRowsForYear(expenseRows, currentYear);
-  const previousExpenses = previousYear
-    ? preferredRowsForYear(expenseRows, previousYear)
-    : [];
-  const expenseTiles = buildExpenseSummaryTiles(
-    currentExpenses,
-    previousExpenses
-  );
   const expenseByFunction = toChartData(
     groupAndSum(currentExpenses, "functionArea")
   );
+  const expenseTotal = currentExpenses.reduce(
+    (sum, row) => sum + row.amount,
+    0
+  );
+  const topExpenseFunction = Object.entries(
+    groupAndSum(currentExpenses, "functionArea")
+  ).sort((a, b) => b[1] - a[1])[0];
+  const topExpensePct = topExpenseFunction
+    ? (topExpenseFunction[1] / expenseTotal) * 100
+    : 0;
 
   const revenueYears = detectCurrentAndPreviousYear(revenueRows);
   const currentRevenues = preferredRowsForYear(
     revenueRows,
     revenueYears.currentYear
   );
-  const previousRevenues = revenueYears.previousYear
-    ? preferredRowsForYear(revenueRows, revenueYears.previousYear)
-    : [];
-  const revenueTiles = buildRevenueSummaryTiles(
-    currentRevenues,
-    previousRevenues
-  );
-  const revenueByCategory = toChartData(
-    groupAndSum(currentRevenues, "category1")
-  );
-
-  const years = allYears.length > 0 ? allYears : [currentYear];
-  const functions = [
-    ...new Set(currentExpenses.map((row) => row.functionArea || "Other")),
-  ];
-  const expenseTrendSeries = functions.slice(0, 6).map((functionName) => ({
-    label: functionName,
-    data: years.map((year) =>
-      preferredRowsForYear(expenseRows, year)
-        .filter((row) => (row.functionArea || "Other") === functionName)
-        .reduce((sum, row) => sum + row.amount, 0)
-    ),
-  }));
-
-  const expenseTotal = currentExpenses.reduce(
-    (sum, row) => sum + row.amount,
-    0
-  );
   const revenueTotal = currentRevenues.reduce(
     (sum, row) => sum + row.amount,
     0
   );
-  const balance = revenueTotal - expenseTotal;
-  const balanceTiles: SummaryTile[] = [
-    {
-      label: `FY${currentYear} Operating Budget`,
-      value: abbreviateCurrency(expenseTotal),
-    },
-    {
-      label: `FY${revenueYears.currentYear} Total Revenue`,
-      value: abbreviateCurrency(revenueTotal),
-    },
-    {
-      label: "Budget Balance",
-      value: formatCurrency(balance),
-      changeType: balance >= 0 ? "positive" : "negative",
-    },
-  ];
+  const revenueByCategory = toChartData(
+    groupAndSum(currentRevenues, "category1")
+  );
+  const topRevenueCategories = Object.entries(
+    groupAndSum(currentRevenues, "category1")
+  )
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4);
+  const topRevenuePct = topRevenueCategories[0]
+    ? (topRevenueCategories[0][1] / revenueTotal) * 100
+    : 0;
 
   const capitalYears = [...new Set(capitalRows.map((row) => row.fiscalYear))].sort(
     (a, b) => a.localeCompare(b, undefined, { numeric: true })
@@ -129,166 +200,189 @@ export default async function DashboardPage({
     (sum, row) => sum + row.amount,
     0
   );
-  const reserves = buildReserveSeries(reserveRows);
-  const latestReserveTotal = reserves.latestYear
-    ? reserves.totalsByYear[reserves.latestYear] || 0
-    : 0;
-  const longTermTiles: SummaryTile[] = [];
+  const topCapitalDepartments = Object.entries(
+    groupAndSum(latestCapitalRows, "department")
+  )
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4);
 
-  if (latestCapitalYear) {
-    longTermTiles.push(
-      {
-        label: `FY${latestCapitalYear} Capital Investment`,
-        value: abbreviateCurrency(latestCapitalTotal),
-      },
-      {
-        label: "Capital Projects",
-        value: latestCapitalRows.length.toString(),
-      }
+  const reserveSeries = buildReserveSeries(reserveRows);
+  const latestReserveYear = reserveSeries.latestYear;
+  const latestReserveTotal = latestReserveYear
+    ? reserveSeries.totalsByYear[latestReserveYear] || 0
+    : 0;
+  const topReserveFunds = reserveSeries.funds
+    .slice(0, 4)
+    .map(
+      (fund) =>
+        [fund.name, fund.balances[latestReserveYear || ""] || 0] as [
+          string,
+          number,
+        ]
     );
-  }
-  if (reserves.latestYear) {
-    longTermTiles.push(
-      {
-        label: `FY${reserves.latestYear} Total Reserves`,
-        value: abbreviateCurrency(latestReserveTotal),
-      },
-      {
-        label: "Reserve Funds",
-        value: reserves.funds.length.toString(),
-      }
-    );
-  }
+
+  const heroYear = expenseRows.length > 0
+    ? currentYear
+    : revenueRows.length > 0
+      ? revenueYears.currentYear
+      : latestCapitalYear || latestReserveYear || currentYear;
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          FY{currentYear} Budget Overview
-        </h1>
-        <p className="text-gray-600 mt-1">
-          Town of {town.name} financial summary
-        </p>
-      </div>
-
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="text-sm text-blue-800 leading-relaxed">
-          <strong>Welcome to {town.name}&apos;s budget portal.</strong> Compare
-          adopted budgets with actual results, inspect capital investments and
-          reserves, export the underlying tables, or open the{" "}
-          <Link
-            href={`/${town.slug}/budget-book`}
-            className="underline font-medium"
-          >
-            printable Budget Book
-          </Link>
-          .
-        </p>
-      </div>
-
-      <section>
-        <div className="flex items-end justify-between gap-4 mb-4">
+    <div className="-mx-4 sm:-mx-6 lg:-mx-8 -mt-8">
+      <section
+        className="px-4 sm:px-6 lg:px-8 py-16"
+        style={{
+          background: `linear-gradient(135deg, ${town.primaryColor}, #111827)`,
+        }}
+      >
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-10 items-center">
           <div>
-            <h2 className="text-lg font-medium">Operating Balance</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Adopted operating expenses compared with expected revenue
+            <h1 className="text-4xl sm:text-5xl font-bold text-white tracking-tight leading-tight mb-4">
+              A Clearer View of {town.name}&apos;s Finances.
+            </h1>
+            <p className="text-white/80 text-base sm:text-lg leading-relaxed mb-6 max-w-xl">
+              OpenBook makes {town.name}&apos;s budget, revenues, and capital
+              investments understandable and accessible to every resident.
             </p>
+            <Link
+              href={`/${town.slug}/expenses`}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md bg-white text-gray-900 text-sm font-semibold hover:bg-gray-100 transition-colors"
+            >
+              Explore FY{heroYear} Budget →
+            </Link>
           </div>
-        </div>
-        <SummaryTiles tiles={balanceTiles} />
-      </section>
 
-      <section>
-        <div className="flex items-end justify-between gap-4 mb-4">
-          <div>
-            <h2 className="text-lg font-medium">Expenses</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Spending by function area with a multi-year comparison
+          <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-5">
+            <p className="text-xs font-medium uppercase tracking-wide text-white/60 mb-4">
+              FY{heroYear} at a Glance
             </p>
-          </div>
-          <Link
-            href={`/${town.slug}/expenses`}
-            className="text-sm font-medium underline underline-offset-2"
-            style={{ color: town.primaryColor }}
-          >
-            View expenses
-          </Link>
-        </div>
-        <SummaryTiles tiles={expenseTiles} tooltips={categoryTooltips} />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-          <PieChart
-            data={expenseByFunction}
-            title={`FY${currentYear} Expenses by Function`}
-            townColor={town.primaryColor}
-          />
-          <BarChart
-            categories={years.map((year) => `FY${year}`)}
-            series={expenseTrendSeries}
-            title="Expense Trend by Function"
-            stacked
-          />
-        </div>
-      </section>
-
-      <section>
-        <div className="flex items-end justify-between gap-4 mb-4">
-          <div>
-            <h2 className="text-lg font-medium">Revenues</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Taxes, state aid, local receipts, and other funding sources
-            </p>
-          </div>
-          <Link
-            href={`/${town.slug}/revenues`}
-            className="text-sm font-medium underline underline-offset-2"
-            style={{ color: town.primaryColor }}
-          >
-            View revenues
-          </Link>
-        </div>
-        <SummaryTiles tiles={revenueTiles} tooltips={categoryTooltips} />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-          <PieChart
-            data={revenueByCategory}
-            title={`FY${revenueYears.currentYear} Revenue by Category`}
-            townColor={town.primaryColor}
-          />
-        </div>
-      </section>
-
-      {longTermTiles.length > 0 && (
-        <section>
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
-            <div>
-              <h2 className="text-lg font-medium">Capital &amp; Reserves</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Long-term investments and published financial cushions
-              </p>
-            </div>
-            <div className="flex gap-4 text-sm font-medium">
-              {latestCapitalYear && (
-                <Link
-                  href={`/${town.slug}/capital`}
-                  className="underline underline-offset-2"
-                  style={{ color: town.primaryColor }}
-                >
-                  View capital
-                </Link>
-              )}
-              {reserves.latestYear && (
-                <Link
-                  href={`/${town.slug}/reserves`}
-                  className="underline underline-offset-2"
-                  style={{ color: town.primaryColor }}
-                >
-                  View reserves
-                </Link>
-              )}
+            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+              <div>
+                <p className="text-xs text-white/60 uppercase tracking-wide">
+                  Operating Budget
+                </p>
+                <p className="text-xl font-bold text-white mt-0.5">
+                  {abbreviateCurrency(expenseTotal)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-white/60 uppercase tracking-wide">
+                  Total Revenue
+                </p>
+                <p className="text-xl font-bold text-white mt-0.5">
+                  {abbreviateCurrency(revenueTotal)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-white/60 uppercase tracking-wide">
+                  Capital Investment
+                </p>
+                <p className="text-xl font-bold text-white mt-0.5">
+                  {latestCapitalYear ? abbreviateCurrency(latestCapitalTotal) : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-white/60 uppercase tracking-wide">
+                  Expense Line Items
+                </p>
+                <p className="text-xl font-bold text-white mt-0.5">
+                  {currentExpenses.length.toLocaleString()}
+                </p>
+              </div>
             </div>
           </div>
-          <SummaryTiles tiles={longTermTiles} />
-        </section>
-      )}
+        </div>
+      </section>
+
+      <div className="[&>section:nth-child(odd)]:bg-white [&>section:nth-child(even)]:bg-gray-50">
+        {currentExpenses.length > 0 && (
+          <section className="px-4 sm:px-6 lg:px-8 py-16">
+            <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+              <SectionIntro
+                eyebrow="Expenses"
+                title={`Where ${town.name} Invests`}
+                subtext={
+                  topExpenseFunction
+                    ? `${topExpenseFunction[0]} represents the largest area of spending at ${topExpensePct.toFixed(1)}% of the total budget. Every dollar is appropriated through the annual budget process.`
+                    : "Every dollar is appropriated through the annual budget process."
+                }
+                bigNumber={abbreviateCurrency(expenseTotal)}
+                bigNumberLabel={`Total FY${currentYear} Operating Budget`}
+                ctaLabel="Explore Expenses"
+                ctaHref={`/${town.slug}/expenses`}
+                color={town.primaryColor}
+              />
+              <PieChart
+                data={expenseByFunction}
+                title={`FY${currentYear} Expenses by Function`}
+                townColor={town.primaryColor}
+              />
+            </div>
+          </section>
+        )}
+
+        {currentRevenues.length > 0 && (
+          <section className="px-4 sm:px-6 lg:px-8 py-16">
+            <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+              <SectionIntro
+                eyebrow="Revenues"
+                title={`How ${town.name} is Funded`}
+                subtext={
+                  topRevenueCategories[0]
+                    ? `${topRevenueCategories[0][0]} is the largest source of funding at ${topRevenuePct.toFixed(1)}% of total revenue, alongside state aid and local receipts.`
+                    : `Taxes, state aid, local receipts, and other sources fund ${town.name}'s operations.`
+                }
+                bigNumber={abbreviateCurrency(revenueTotal)}
+                bigNumberLabel={`Total FY${revenueYears.currentYear} Revenue`}
+                ctaLabel="Explore Revenues"
+                ctaHref={`/${town.slug}/revenues`}
+                color={town.primaryColor}
+              />
+              <PieChart
+                data={revenueByCategory}
+                title={`FY${revenueYears.currentYear} Revenue by Category`}
+                townColor={town.primaryColor}
+              />
+            </div>
+          </section>
+        )}
+
+        {latestCapitalYear && (
+          <section className="px-4 sm:px-6 lg:px-8 py-16">
+            <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+              <SectionIntro
+                eyebrow="Capital Plan"
+                title={`Building ${town.name}'s Future`}
+                subtext={`Capital funds invest in roads, facilities, equipment, and infrastructure that will serve ${town.name} for years to come.`}
+                bigNumber={abbreviateCurrency(latestCapitalTotal)}
+                bigNumberLabel={`FY${latestCapitalYear} Capital Investment`}
+                ctaLabel="Explore Capital Plan"
+                ctaHref={`/${town.slug}/capital`}
+                color={town.primaryColor}
+              />
+              <AmountTiles items={topCapitalDepartments} color={town.primaryColor} />
+            </div>
+          </section>
+        )}
+
+        {latestReserveYear && (
+          <section className="px-4 sm:px-6 lg:px-8 py-16">
+            <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+              <SectionIntro
+                eyebrow="Reserves"
+                title={`Protecting ${town.name}'s Future`}
+                subtext={`Reserve and stabilization funds help ${town.name} respond to unexpected costs, plan capital investments, and reduce reliance on short-term borrowing.`}
+                bigNumber={abbreviateCurrency(latestReserveTotal)}
+                bigNumberLabel={`FY${latestReserveYear} Total Reserves`}
+                ctaLabel="Explore Reserves"
+                ctaHref={`/${town.slug}/reserves`}
+                color={town.primaryColor}
+              />
+              <AmountTiles items={topReserveFunds} color={town.primaryColor} />
+            </div>
+          </section>
+        )}
+      </div>
     </div>
   );
 }

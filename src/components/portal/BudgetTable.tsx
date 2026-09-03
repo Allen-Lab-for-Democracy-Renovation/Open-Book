@@ -43,6 +43,38 @@ interface BudgetTableProps {
   seriesColumns?: SeriesColumnConfig;
 }
 
+function ComparisonBadge({
+  value,
+  bold,
+}: {
+  value: string | number | null;
+  bold?: boolean;
+}) {
+  if (value === null || value === "—") {
+    return <span className="text-gray-400">—</span>;
+  }
+  const str = String(value);
+  const isPositive = str.startsWith("+");
+  const isNegative = str.startsWith("-");
+  if (!isPositive && !isNegative) {
+    return <span className="text-gray-400">{str}</span>;
+  }
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs ${
+        bold ? "font-semibold" : "font-normal"
+      } ${
+        isPositive
+          ? "bg-emerald-100 text-emerald-800"
+          : "bg-red-100 text-red-800"
+      }`}
+    >
+      <span aria-hidden="true">{isPositive ? "▲" : "▼"}</span>
+      {str}
+    </span>
+  );
+}
+
 function displayDepth(row: TableRow, activeAncestorCount = 1): number {
   if (row.depth !== undefined) return row.depth;
   if (row.isGroup) return 0;
@@ -259,9 +291,9 @@ export default function BudgetTable({
                   aria-expanded={columnMenuOpen}
                   className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-200 rounded-md bg-gray-50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                 >
-                  <span className="font-medium text-gray-700">Columns</span>
+                  <span className="font-medium text-gray-700">Fiscal Year</span>
                   <span className="text-gray-500 text-xs">
-                    {selectedColumnKeys.length}/{allColumns.length}
+                    {selectedColumnKeys.length} selected
                   </span>
                   <span aria-hidden="true" className="text-gray-400 text-xs">
                     {columnMenuOpen ? "▴" : "▾"}
@@ -269,7 +301,7 @@ export default function BudgetTable({
                 </button>
                 {columnMenuOpen && (
                   <div
-                    aria-label="Column visibility"
+                    aria-label="Fiscal year visibility"
                     className="absolute right-0 top-full mt-1 z-30 bg-white border border-gray-200 rounded-md shadow-lg min-w-[13rem] max-h-80 overflow-y-auto py-1"
                   >
                     {[...allColumns].reverse().map((column) => (
@@ -363,62 +395,64 @@ export default function BudgetTable({
                           : "border-b border-gray-50 hover:bg-gray-50/50 transition-colors duration-75 text-gray-700"
                     }
                   >
-                    {row.cells.map((cell, index) => (
-                      <td
-                        key={index}
-                        className={`px-4 py-2 whitespace-nowrap ${
-                          typeof cell === "number"
-                            ? "text-right tabular-nums"
-                            : ""
-                        } ${
-                          typeof cell === "string" && cell.startsWith("+")
-                            ? "text-emerald-600"
-                            : typeof cell === "string" && cell.startsWith("-")
-                              ? "text-red-600"
-                              : ""
-                        }`}
-                        style={
-                          depth > 0 && index === 0
-                            ? { paddingLeft: `${1 + depth * 1.25}rem` }
-                            : undefined
-                        }
-                        {...(itemTooltip && index === 0
-                          ? { title: itemTooltip }
-                          : {})}
-                      >
-                        <span className="inline-flex items-center gap-1.5">
-                          {index === 0 && isHierarchyRow && (
-                            <button
-                              type="button"
-                              onClick={() => toggleRow(row.id)}
-                              aria-label={`${
-                                rowIsCollapsed ? "Expand" : "Collapse"
-                              } ${firstCell}`}
-                              className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-500 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                              <span aria-hidden="true">
-                                {rowIsCollapsed ? "▸" : "▾"}
+                    {row.cells.map((cell, index) => {
+                      const isComparisonCell =
+                        Boolean(comparison) && index === row.cells.length - 1;
+                      return (
+                        <td
+                          key={index}
+                          className={`px-4 py-2 whitespace-nowrap ${
+                            isComparisonCell
+                              ? "text-center"
+                              : typeof cell === "number"
+                                ? "text-right tabular-nums"
+                                : ""
+                          }`}
+                          style={
+                            depth > 0 && index === 0
+                              ? { paddingLeft: `${1 + depth * 1.25}rem` }
+                              : undefined
+                          }
+                          {...(itemTooltip && index === 0
+                            ? { title: itemTooltip }
+                            : {})}
+                        >
+                          <span className="inline-flex items-center gap-1.5">
+                            {index === 0 && isHierarchyRow && (
+                              <button
+                                type="button"
+                                onClick={() => toggleRow(row.id)}
+                                aria-label={`${
+                                  rowIsCollapsed ? "Expand" : "Collapse"
+                                } ${firstCell}`}
+                                className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-500 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              >
+                                <span aria-hidden="true">
+                                  {rowIsCollapsed ? "▸" : "▾"}
+                                </span>
+                              </button>
+                            )}
+                            {isComparisonCell ? (
+                              <ComparisonBadge value={cell} bold={row.isGroup} />
+                            ) : typeof cell === "number" ? (
+                              <span className="tabular-nums">
+                                {formatCurrency(cell)}
                               </span>
-                            </button>
-                          )}
-                          {typeof cell === "number" ? (
-                            <span className="tabular-nums">
-                              {formatCurrency(cell)}
-                            </span>
-                          ) : (
-                            <span className={depth > 0 && index === 0 ? "text-gray-700" : ""}>
-                              {cell ?? ""}
-                            </span>
-                          )}
-                          {index === 0 && groupTooltip && (
-                            <TooltipIcon text={groupTooltip} label={firstCell} />
-                          )}
-                          {index === 0 && itemTooltip && (
-                            <TooltipIcon text={itemTooltip} label={firstCell} />
-                          )}
-                        </span>
-                      </td>
-                    ))}
+                            ) : (
+                              <span className={depth > 0 && index === 0 ? "text-gray-700" : ""}>
+                                {cell ?? ""}
+                              </span>
+                            )}
+                            {index === 0 && groupTooltip && (
+                              <TooltipIcon text={groupTooltip} label={firstCell} />
+                            )}
+                            {index === 0 && itemTooltip && (
+                              <TooltipIcon text={itemTooltip} label={firstCell} />
+                            )}
+                          </span>
+                        </td>
+                      );
+                    })}
                   </tr>
                 );
               })}

@@ -15,6 +15,58 @@ interface Town {
   published: boolean;
 }
 
+const LOGO_MAX_DIMENSION = 256;
+// The logo is stored inline on the Town record, so it ships with the HTML of
+// every page. Flat-colour seals compress to a few KB as PNG; photographic
+// ones do not, so anything above this falls back to JPEG.
+const PNG_SIZE_BUDGET = 96 * 1024;
+
+function encodeCanvas(
+  canvas: HTMLCanvasElement,
+  type: string,
+  quality?: number
+): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) =>
+        blob ? resolve(blob) : reject(new Error("Could not encode image")),
+      type,
+      quality
+    );
+  });
+}
+
+// Scales an image down to fit within maxDimension (preserving aspect ratio).
+// PNG is preferred so seals keep transparency and crisp edges; photographic
+// images that stay large as PNG are re-encoded as JPEG instead.
+async function resizeImage(file: File, maxDimension: number): Promise<Blob> {
+  const bitmap = await createImageBitmap(file);
+  try {
+    const scale = Math.min(
+      1,
+      maxDimension / Math.max(bitmap.width, bitmap.height)
+    );
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas not supported");
+    ctx.drawImage(bitmap, 0, 0, width, height);
+
+    const png = await encodeCanvas(canvas, "image/png");
+    if (png.size <= PNG_SIZE_BUDGET) return png;
+
+    const jpeg = await encodeCanvas(canvas, "image/jpeg", 0.85);
+    return jpeg.size < png.size ? jpeg : png;
+  } finally {
+    bitmap.close();
+  }
+}
+
 export default function SetupPage() {
   const router = useRouter();
   const [town, setTown] = useState<Town | null>(null);
@@ -65,19 +117,30 @@ export default function SetupPage() {
     setLogoUploading(true);
     setError("");
 
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
+      if (!file.type.startsWith("image/")) {
+        setError("Logo must be a PNG, JPEG, or WebP image");
+        return;
+      }
+
+      // Downscale in the browser so the stored logo stays small regardless
+      // of how large the original seal is. The header renders it at 28px and
+      // the Budget Book cover at 96px, so 256px covers both at retina sizes.
+      const resized = await resizeImage(file, LOGO_MAX_DIMENSION);
+
+      const formData = new FormData();
+      formData.append("file", resized);
+
       const res = await fetch("/api/logo", { method: "POST", body: formData });
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
+
       if (!res.ok) {
-        setError(data.error || "Logo upload failed");
+        setError(data?.error || `Logo upload failed (server error ${res.status})`);
         return;
       }
       setLogoUrl(data.url);
     } catch {
-      setError("Logo upload failed");
+      setError("Could not read that image. Please try another file.");
     } finally {
       setLogoUploading(false);
     }
@@ -267,7 +330,7 @@ export default function SetupPage() {
           <p className="text-xs text-gray-500 mt-1">
             {logoUploading
               ? "Uploading..."
-              : "Upload your town seal or logo. PNG, JPEG, or WebP (max 5 MB)."}
+              : "Upload your town seal or logo. PNG, JPEG, or WebP. Large images are resized automatically."}
           </p>
         </div>
 

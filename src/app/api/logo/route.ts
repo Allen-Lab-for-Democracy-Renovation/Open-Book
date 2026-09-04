@@ -1,79 +1,91 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
-import { randomBytes } from "crypto";
 import { requireAdmin } from "@/lib/auth";
 
-const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+// Logos are stored inline on the Town record as a data URL rather than
+// written to disk. Hosts like Vercel have a read-only filesystem outside
+// /tmp, and anything written at runtime is discarded on the next deploy,
+// so writing to public/uploads failed in production even though it worked
+// locally. The admin form downscales images before upload, so the stored
+// payload stays small.
+const MAX_SIZE = 1024 * 1024; // 1MB
 
 // Raster formats only — SVG is excluded because it can carry active
-// content (scripts) and would be served same-origin from /uploads.
-function detectImageExtension(bytes: Uint8Array): "png" | "jpg" | "webp" | null {
-  if (
-    bytes.length >= 8 &&
-    bytes[0] === 0x89 &&
-    bytes[1] === 0x50 &&
-    bytes[2] === 0x4e &&
-    bytes[3] === 0x47 &&
-    bytes[4] === 0x0d &&
-    bytes[5] === 0x0a &&
-    bytes[6] === 0x1a &&
-    bytes[7] === 0x0a
-  ) {
-    return "png";
-  }
-  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
-    return "jpg";
-  }
-  if (
-    bytes.length >= 12 &&
-    bytes[0] === 0x52 &&
-    bytes[1] === 0x49 &&
-    bytes[2] === 0x46 &&
-    bytes[3] === 0x46 &&
-    bytes[8] === 0x57 &&
-    bytes[9] === 0x45 &&
-    bytes[10] === 0x42 &&
-    bytes[11] === 0x50
-  ) {
-    return "webp";
-  }
-  return null;
+// content (scripts) and would be rendered same-origin.
+const SIGNATURES = [
+  {
+    ext: "png",
+    mimeType: "image/png",
+    matches: (b: Uint8Array) =>
+      b.length >= 8 &&
+      b[0] === 0x89 &&
+      b[1] === 0x50 &&
+      b[2] === 0x4e &&
+      b[3] === 0x47 &&
+      b[4] === 0x0d &&
+      b[5] === 0x0a &&
+      b[6] === 0x1a &&
+      b[7] === 0x0a,
+  },
+  {
+    ext: "jpg",
+    mimeType: "image/jpeg",
+    matches: (b: Uint8Array) =>
+      b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff,
+  },
+  {
+    ext: "webp",
+    mimeType: "image/webp",
+    matches: (b: Uint8Array) =>
+      b.length >= 12 &&
+      b[0] === 0x52 &&
+      b[1] === 0x49 &&
+      b[2] === 0x46 &&
+      b[3] === 0x46 &&
+      b[8] === 0x57 &&
+      b[9] === 0x45 &&
+      b[10] === 0x42 &&
+      b[11] === 0x50,
+  },
+] as const;
+
+function detectMimeType(bytes: Uint8Array): string | null {
+  return SIGNATURES.find((sig) => sig.matches(bytes))?.mimeType ?? null;
 }
 
 export async function POST(request: Request) {
   const admin = await requireAdmin();
   if (admin instanceof NextResponse) return admin;
 
-  const formData = await request.formData();
-  const file = formData.get("file") as File | null;
+  try {
+    const formData = await request.formData();
+    const file = formData.get("file") as File | null;
 
-  if (!file) {
-    return NextResponse.json({ error: "No file provided" }, { status: 400 });
-  }
+    if (!file) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
 
-  if (file.size > MAX_SIZE) {
+    if (file.size > MAX_SIZE) {
+      return NextResponse.json(
+        { error: "Logo must be under 1 MB. Try a smaller image." },
+        { status: 400 }
+      );
+    }
+
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const mimeType = detectMimeType(bytes);
+    if (!mimeType) {
+      return NextResponse.json(
+        { error: "Logo must be a PNG, JPEG, or WebP image" },
+        { status: 400 }
+      );
+    }
+
+    const base64 = Buffer.from(bytes).toString("base64");
+    return NextResponse.json({ url: `data:${mimeType};base64,${base64}` });
+  } catch {
     return NextResponse.json(
-      { error: "File must be under 5 MB" },
-      { status: 400 }
+      { error: "Could not process that image. Please try another file." },
+      { status: 500 }
     );
   }
-
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const ext = detectImageExtension(bytes);
-  if (!ext) {
-    return NextResponse.json(
-      { error: "File must be a PNG, JPEG, or WebP image" },
-      { status: 400 }
-    );
-  }
-
-  const filename = `logo-${randomBytes(8).toString("hex")}.${ext}`;
-
-  const uploadsDir = join(process.cwd(), "public", "uploads");
-  await mkdir(uploadsDir, { recursive: true });
-
-  await writeFile(join(uploadsDir, filename), bytes);
-
-  return NextResponse.json({ url: `/uploads/${filename}` });
 }

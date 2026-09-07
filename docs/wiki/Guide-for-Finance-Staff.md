@@ -24,8 +24,7 @@ After logging in, you will see a navigation bar at the top of the page with thes
 | **Upload** | Add budget data from a spreadsheet file |
 | **Data** | View, replace, or delete uploaded files |
 | **Tooltips** | Add plain-language explanations for budget categories and line items |
-| **Links** | Add links to external resources (meeting minutes, reports, etc.) |
-| **PDFs** | Upload PDF documents residents can download |
+| **Documents** | Add links to external resources and upload PDFs residents can download |
 | **Questions** | View questions residents have submitted through the portal |
 | **Requests** | Review capital expenditure requests submitted by department staff |
 | **Transfer** | Hand admin access to a new person |
@@ -185,44 +184,41 @@ To remove a tooltip, clear the text field and click Save.
 
 ---
 
-## Step 6 — Add Supporting Links (Optional)
+## Step 6 — Add Documents & Resources (Optional)
 
-Go to the **Links** tab.
+Go to the **Documents** tab. This is the admin side of the public **Documents & Resources** page, and it holds both kinds of resource in one place:
 
-Supporting links appear on the public portal's Documents & Resources page. Use these to point residents to external websites — for example, the town meeting warrant posted on your town's main website, a state aid summary, or a press release.
+- **Links** point residents to a document that already lives on your municipality's website or another site.
+- **PDFs** are files you upload to OpenBook directly.
 
-To add a link:
-1. Enter a **Title** — the clickable text residents will see (e.g., `FY2026 Adopted Budget`)
+Both appear together on the public page, grouped by category, each badged so residents can tell a link from a downloadable file.
+
+### Link or upload?
+
+**Prefer a link whenever the document is already online.** There is no size limit, and residents always get the current version of the file rather than a copy that goes stale in OpenBook. Upload a PDF when a document is not published anywhere online yet. **Maximum upload size is 10 MB per file.**
+
+### To add a link
+
+1. With **Add a link** selected, enter a **Title** — the clickable text residents will see (e.g., `FY2026 Adopted Budget`)
 2. Enter the **URL** — the full web address, starting with `https://`
 3. Optionally add a **Description** — a sentence explaining what the link contains
 4. Choose a **Category** — Budget Document, Meeting Minutes, Report, Press Release, or Other
+5. Click **Add Link**
 
-Click **Add Link**. The link appears on your portal immediately.
+### To upload a PDF
 
-To edit or delete a link, use the **Edit** and **Delete** buttons next to each existing link.
-
----
-
-## Step 7 — Upload PDF Documents (Optional)
-
-Go to the **PDFs** tab.
-
-You can upload PDF files that residents can download directly from your portal — for example, the full adopted budget document, annual reports, or fee schedules. **Maximum file size is 10 MB per file.**
-
-**Prefer links when you can.** If the document already lives on your municipality's website, add it under **Links** (Step 6) instead. Links have no size limit, and residents always get the current version of the file rather than a copy that goes stale. Use the PDFs tab for documents that are not published anywhere online yet, or that are larger than what your website can host.
-
-To upload a PDF:
-1. Drag the file into the upload box, or click **browse to select**
-2. Optionally give it a **Display Title** (what residents will see — defaults to the file name)
-3. Choose a **Category** (Budget Document, Meeting Minutes, Report, Press Release, or Other)
+1. Switch to **Upload a PDF**
+2. Drag the file into the upload box, or click **browse to select**
+3. Optionally give it a **Display Title** (defaults to the file name)
 4. Optionally add a **Description** — a one-line summary shown under the title on the public page, so residents know what the document is before they open it
-5. Click **Upload PDF**
+5. Choose a **Category**
+6. Click **Upload PDF**
 
 If a file is over 10 MB, OpenBook tells you before it uploads. Either compress the PDF (most "reduce file size" or "optimize" options in Acrobat and Preview will do it) or host it on your website and add it as a link.
 
-Uploaded PDFs and links appear together on the public **Documents & Resources** page, grouped by category, each with a badge showing whether it is a PDF or a link.
+### Managing what you have added
 
-To delete a PDF, click **Delete** next to it. This permanently removes the file.
+Everything you have added is listed under **On Your Portal**, grouped by category in the same order residents see. Links can be edited in place with **Edit**, and given a **Sort Order** to control where they appear within their category. **Delete** removes a link or permanently removes an uploaded file. **Open** and **View** show you the resource itself.
 
 ---
 

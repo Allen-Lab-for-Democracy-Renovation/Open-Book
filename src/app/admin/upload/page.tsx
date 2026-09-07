@@ -6,6 +6,10 @@ import { useDropzone } from "react-dropzone";
 import Link from "next/link";
 import type { DetectedMapping, DataCategory } from "@/types";
 import HelpBox from "@/components/admin/HelpBox";
+import {
+  MAX_DATA_FILE_SIZE,
+  MAX_DATA_FILE_SIZE_LABEL,
+} from "@/lib/upload-limits";
 
 interface CategoryRequirement {
   field: string;
@@ -328,9 +332,18 @@ export default function UploadPage() {
       const file = acceptedFiles[0];
       if (!file || !townId) return;
 
-      setUploading(true);
       setError("");
       setValidationErrors([]);
+
+      // Say so immediately rather than after uploading the whole file.
+      if (file.size > MAX_DATA_FILE_SIZE) {
+        setError(
+          `This file is ${(file.size / 1024 / 1024).toFixed(1)} MB. The maximum is ${MAX_DATA_FILE_SIZE_LABEL}. Try splitting it by fiscal year and uploading one file at a time.`
+        );
+        return;
+      }
+
+      setUploading(true);
 
       const formData = new FormData();
       formData.append("file", file);
@@ -488,7 +501,8 @@ export default function UploadPage() {
             </p>
             <p className="mb-1.5">
               <strong>2. Upload your file</strong> — Drag in a CSV or Excel file
-              from your accounting system (UMAS exports work great).
+              from your accounting system (UMAS exports work great), up to{" "}
+              {MAX_DATA_FILE_SIZE_LABEL}.
             </p>
             <p>
               <strong>3. Map the columns</strong> — We&apos;ll try to match your
@@ -499,7 +513,8 @@ export default function UploadPage() {
           <HelpBox title="What file formats work?" variant="tip">
             <p>
               We accept <strong>.csv</strong> and <strong>.xlsx</strong> (Excel)
-              files up to 10 MB. Your file should have a header row with column
+              files up to {MAX_DATA_FILE_SIZE_LABEL}. Your file should have a
+              header row with column
               names like &quot;Department&quot;, &quot;Line Item&quot;,
               &quot;FY2026 Budget&quot;, etc. Check the{" "}
               <a href="/docs" className="underline font-medium" target="_blank">
@@ -601,7 +616,7 @@ export default function UploadPage() {
                     Drag and drop a CSV or Excel file
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    or click to browse (max 10MB)
+                    or click to browse (max {MAX_DATA_FILE_SIZE_LABEL})
                   </p>
                 </div>
               )}

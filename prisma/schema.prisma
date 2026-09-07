@@ -153,15 +153,20 @@ model SupportingLink {
 }
 
 model PdfDocument {
-  id        String   @id @default(cuid())
-  townId    String
-  town      Town     @relation(fields: [townId], references: [id], onDelete: Cascade)
-  fileName  String
-  filePath  String
-  fileSize  Int
-  title     String?
-  category  String   @default("other")
-  createdAt DateTime @default(now())
+  id       String @id @default(cuid())
+  townId   String
+  town     Town   @relation(fields: [townId], references: [id], onDelete: Cascade)
+  fileName String
+  // Legacy disk path for documents uploaded before files moved into the
+  // database. Null for anything uploaded since; those are served from fileData.
+  filePath String?
+  fileData Bytes?
+  fileSize Int
+
+  title       String?
+  description String?
+  category    String   @default("other")
+  createdAt   DateTime @default(now())
 
   @@index([townId])
 }

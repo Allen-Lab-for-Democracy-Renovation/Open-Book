@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
+import { MAX_LOGO_SIZE, MAX_LOGO_SIZE_LABEL } from "@/lib/upload-limits";
 
 // Logos are stored inline on the Town record as a data URL rather than
 // written to disk. Hosts like Vercel have a read-only filesystem outside
@@ -7,7 +8,6 @@ import { requireAdmin } from "@/lib/auth";
 // so writing to public/uploads failed in production even though it worked
 // locally. The admin form downscales images before upload, so the stored
 // payload stays small.
-const MAX_SIZE = 1024 * 1024; // 1MB
 
 // Raster formats only — SVG is excluded because it can carry active
 // content (scripts) and would be rendered same-origin.
@@ -64,9 +64,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    if (file.size > MAX_SIZE) {
+    if (file.size > MAX_LOGO_SIZE) {
       return NextResponse.json(
-        { error: "Logo must be under 1 MB. Try a smaller image." },
+        { error: `Logo must be under ${MAX_LOGO_SIZE_LABEL}. Try a smaller image.` },
         { status: 400 }
       );
     }

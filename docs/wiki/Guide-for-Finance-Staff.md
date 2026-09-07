@@ -207,13 +207,20 @@ To edit or delete a link, use the **Edit** and **Delete** buttons next to each e
 
 Go to the **PDFs** tab.
 
-You can upload PDF files that residents can download directly from your portal — for example, the full adopted budget document, annual reports, or fee schedules. Maximum file size is 50 MB per file.
+You can upload PDF files that residents can download directly from your portal — for example, the full adopted budget document, annual reports, or fee schedules. **Maximum file size is 10 MB per file.**
+
+**Prefer links when you can.** If the document already lives on your municipality's website, add it under **Links** (Step 6) instead. Links have no size limit, and residents always get the current version of the file rather than a copy that goes stale. Use the PDFs tab for documents that are not published anywhere online yet, or that are larger than what your website can host.
 
 To upload a PDF:
 1. Drag the file into the upload box, or click **browse to select**
 2. Optionally give it a **Display Title** (what residents will see — defaults to the file name)
 3. Choose a **Category** (Budget Document, Meeting Minutes, Report, Press Release, or Other)
-4. Click **Upload PDF**
+4. Optionally add a **Description** — a one-line summary shown under the title on the public page, so residents know what the document is before they open it
+5. Click **Upload PDF**
+
+If a file is over 10 MB, OpenBook tells you before it uploads. Either compress the PDF (most "reduce file size" or "optimize" options in Acrobat and Preview will do it) or host it on your website and add it as a link.
+
+Uploaded PDFs and links appear together on the public **Documents & Resources** page, grouped by category, each with a badge showing whether it is a PDF or a link.
 
 To delete a PDF, click **Delete** next to it. This permanently removes the file.
 

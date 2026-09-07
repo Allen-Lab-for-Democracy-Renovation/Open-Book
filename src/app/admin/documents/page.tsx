@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import HelpBox from "@/components/admin/HelpBox";
+import { MAX_PDF_SIZE, MAX_PDF_SIZE_LABEL } from "@/lib/upload-limits";
 
 interface Town {
   id: string;
@@ -13,9 +14,10 @@ interface PdfDocument {
   id: string;
   townId: string;
   fileName: string;
-  filePath: string;
+  filePath: string | null;
   fileSize: number;
   title: string | null;
+  description: string | null;
   category: string;
   createdAt: string;
 }
@@ -52,6 +54,7 @@ export default function AdminDocumentsPage() {
 
   // Upload form
   const [uploadTitle, setUploadTitle] = useState("");
+  const [uploadDescription, setUploadDescription] = useState("");
   const [uploadCategory, setUploadCategory] = useState("other");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -87,10 +90,20 @@ export default function AdminDocumentsPage() {
     setUploading(true);
     setError("");
 
+    if (selectedFile.size > MAX_PDF_SIZE) {
+      setError(
+        `This file is ${formatFileSize(selectedFile.size)}. The maximum is ${MAX_PDF_SIZE_LABEL}. For larger documents, host the file on your municipality's website and add it as a link instead.`
+      );
+      setUploading(false);
+      return;
+    }
+
     const formData = new FormData();
     formData.append("file", selectedFile);
     formData.append("townId", town.id);
     if (uploadTitle.trim()) formData.append("title", uploadTitle.trim());
+    if (uploadDescription.trim())
+      formData.append("description", uploadDescription.trim());
     formData.append("category", uploadCategory);
 
     try {
@@ -99,20 +112,21 @@ export default function AdminDocumentsPage() {
         body: formData,
       });
 
+      const data = await res.json().catch(() => null);
+
       if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || "Upload failed");
+        setError(data?.error || `Upload failed (server error ${res.status})`);
         return;
       }
 
-      const pdf = await res.json();
-      setPdfs((prev) => [pdf, ...prev]);
+      setPdfs((prev) => [data, ...prev]);
       setSelectedFile(null);
       setUploadTitle("");
+      setUploadDescription("");
       setUploadCategory("other");
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch {
-      setError("Upload failed");
+      setError("Upload failed. Please check your connection and try again.");
     } finally {
       setUploading(false);
     }
@@ -132,18 +146,33 @@ export default function AdminDocumentsPage() {
     }
   };
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragActive(false);
-
-    const file = e.dataTransfer.files?.[0];
-    if (file && file.type === "application/pdf") {
-      setSelectedFile(file);
-      setError("");
-    } else {
+  // Catch the two things the server also rejects, before spending an upload
+  // on them.
+  const acceptFile = useCallback((file: File) => {
+    if (file.type !== "application/pdf") {
       setError("Only PDF files are allowed");
+      return;
     }
+    if (file.size > MAX_PDF_SIZE) {
+      setError(
+        `This file is ${formatFileSize(file.size)}. The maximum is ${MAX_PDF_SIZE_LABEL}. For larger documents, host the file on your municipality's website and add it as a link instead.`
+      );
+      return;
+    }
+    setSelectedFile(file);
+    setError("");
   }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragActive(false);
+
+      const file = e.dataTransfer.files?.[0];
+      if (file) acceptFile(file);
+    },
+    [acceptFile]
+  );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -157,14 +186,7 @@ export default function AdminDocumentsPage() {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.type !== "application/pdf") {
-        setError("Only PDF files are allowed");
-        return;
-      }
-      setSelectedFile(file);
-      setError("");
-    }
+    if (file) acceptFile(file);
   };
 
   const totalSize = pdfs.reduce((sum, p) => sum + p.fileSize, 0);
@@ -201,10 +223,20 @@ export default function AdminDocumentsPage() {
       </div>
 
       <HelpBox title="About PDF uploads" variant="info">
-        <p>
+        <p className="mb-2">
           Upload budget PDFs, meeting minutes, reports, or other documents you
-          want residents to access. Files are stored on the server and appear on
-          the public Documents &amp; Resources page. Maximum file size is 50 MB.
+          want residents to access. They appear on the public Documents &amp;
+          Resources page alongside your links.{" "}
+          <strong>Maximum file size is {MAX_PDF_SIZE_LABEL}.</strong>
+        </p>
+        <p>
+          Have a document larger than {MAX_PDF_SIZE_LABEL}, or one that already
+          lives on your municipality&apos;s website? Add it under{" "}
+          <Link href="/admin/links" className="underline font-medium">
+            Links
+          </Link>{" "}
+          instead — links have no size limit and always point at the latest
+          version of the file.
         </p>
       </HelpBox>
 
@@ -290,7 +322,7 @@ export default function AdminDocumentsPage() {
                 >
                   browse to select
                 </button>{" "}
-                (max 50 MB)
+                (PDF, max {MAX_PDF_SIZE_LABEL})
               </p>
               <input
                 ref={fileInputRef}
@@ -344,6 +376,23 @@ export default function AdminDocumentsPage() {
                   ))}
                 </select>
               </div>
+            </div>
+            <div>
+              <label
+                htmlFor="pdf-description"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Description{" "}
+                <span className="text-gray-500 font-normal">(optional)</span>
+              </label>
+              <textarea
+                id="pdf-description"
+                rows={2}
+                value={uploadDescription}
+                onChange={(e) => setUploadDescription(e.target.value)}
+                placeholder="A short summary residents will see under the title"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
             <button
               onClick={handleUpload}
@@ -408,6 +457,11 @@ export default function AdminDocumentsPage() {
                         {getCategoryLabel(pdf.category)}
                       </span>
                     </div>
+                    {pdf.description && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        {pdf.description}
+                      </p>
+                    )}
                     <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                       <span>{pdf.fileName}</span>
                       <span>{formatFileSize(pdf.fileSize)}</span>
@@ -416,7 +470,7 @@ export default function AdminDocumentsPage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <a
-                      href={pdf.filePath}
+                      href={pdf.filePath || `/api/pdf/${pdf.id}/file`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm text-gray-500 hover:text-gray-900"

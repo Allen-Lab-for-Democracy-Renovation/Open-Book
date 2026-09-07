@@ -206,11 +206,21 @@ export default function AdminLinksPage() {
       </div>
 
       <HelpBox title="What are supporting links?" variant="info">
-        <p>
+        <p className="mb-2">
           Supporting links point residents to external resources like your
-          town&apos;s official budget documents, meeting minutes on a town
-          website, press articles, or reports. These appear on the public
-          Documents &amp; Resources page grouped by category.
+          municipality&apos;s official budget documents, meeting minutes on your
+          website, press articles, or reports. Each link shows its title and
+          description on the public Documents &amp; Resources page, grouped by
+          category.
+        </p>
+        <p>
+          Links are the best option for most documents: there is no size limit,
+          and residents always get the current version of the file. If a
+          document doesn&apos;t live anywhere online yet, you can{" "}
+          <Link href="/admin/documents" className="underline font-medium">
+            upload the PDF
+          </Link>{" "}
+          instead.
         </p>
       </HelpBox>
 

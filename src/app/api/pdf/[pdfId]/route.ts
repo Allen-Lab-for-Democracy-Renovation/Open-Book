@@ -13,22 +13,26 @@ export async function DELETE(
 
   const { pdfId } = await params;
 
-  let pdf;
-  try {
-    pdf = await prisma.pdfDocument.findUniqueOrThrow({ where: { id: pdfId } });
-  } catch {
+  const pdf = await prisma.pdfDocument.findUnique({
+    where: { id: pdfId },
+    select: { id: true, filePath: true },
+  });
+
+  if (!pdf) {
     return NextResponse.json({ error: "PDF not found" }, { status: 404 });
   }
 
-  // Delete file from disk
-  try {
-    const fullPath = join(process.cwd(), "public", pdf.filePath);
-    await unlink(fullPath);
-  } catch {
-    // File may already be missing; continue with DB cleanup
+  // Documents uploaded before files moved into the database still have a copy
+  // on disk. Best-effort cleanup; the file may be gone or the filesystem
+  // read-only, neither of which should block removing the record.
+  if (pdf.filePath) {
+    try {
+      await unlink(join(process.cwd(), "public", pdf.filePath));
+    } catch {
+      // Nothing to clean up.
+    }
   }
 
-  // Delete database record
   await prisma.pdfDocument.delete({ where: { id: pdfId } });
 
   return NextResponse.json({ deleted: true });

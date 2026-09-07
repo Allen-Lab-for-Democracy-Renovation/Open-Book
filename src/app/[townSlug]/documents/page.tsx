@@ -17,6 +17,15 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+// Residents care where a link goes, not the full query string.
+function linkHost(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
 export default async function DocumentsPage({
   params,
 }: {
@@ -31,8 +40,19 @@ export default async function DocumentsPage({
       where: { townId: town.id },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     }),
+    // Never select fileData here — it would pull every document's bytes into
+    // memory just to render a list of links.
     prisma.pdfDocument.findMany({
       where: { townId: town.id },
+      select: {
+        id: true,
+        fileName: true,
+        filePath: true,
+        fileSize: true,
+        title: true,
+        description: true,
+        category: true,
+      },
       orderBy: { createdAt: "desc" },
     }),
   ]);
@@ -151,8 +171,11 @@ export default async function DocumentsPage({
                           {link.description}
                         </p>
                       )}
-                      <p className="text-xs text-gray-400 mt-1 truncate">
-                        {link.url}
+                      <p className="mt-2 flex items-center gap-2 text-xs text-gray-400">
+                        <span className="inline-block rounded bg-gray-100 px-1.5 py-0.5 font-medium text-gray-600">
+                          Link
+                        </span>
+                        <span className="truncate">{linkHost(link.url)}</span>
                       </p>
                     </div>
                   </div>
@@ -162,8 +185,11 @@ export default async function DocumentsPage({
               {catPdfs.map((pdf) => (
                 <a
                   key={pdf.id}
-                  href={pdf.filePath}
-                  download={pdf.fileName}
+                  // Legacy documents still point at their file on disk; newer
+                  // ones are served from the database.
+                  href={pdf.filePath || `/api/pdf/${pdf.id}/file`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="block bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:shadow-sm transition-all group"
                 >
                   <div className="flex items-start gap-3">
@@ -185,8 +211,16 @@ export default async function DocumentsPage({
                       <p className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
                         {pdf.title || pdf.fileName}
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        PDF &middot; {formatFileSize(pdf.fileSize)}
+                      {pdf.description && (
+                        <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                          {pdf.description}
+                        </p>
+                      )}
+                      <p className="mt-2 flex items-center gap-2 text-xs text-gray-400">
+                        <span className="inline-block rounded bg-red-50 px-1.5 py-0.5 font-medium text-red-600">
+                          PDF
+                        </span>
+                        <span>{formatFileSize(pdf.fileSize)}</span>
                       </p>
                     </div>
                   </div>

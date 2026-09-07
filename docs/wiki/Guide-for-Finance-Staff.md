@@ -197,9 +197,11 @@ Both appear together on the public page, grouped by category, each badged so res
 
 **Prefer a link whenever the document is already online.** There is no size limit, and residents always get the current version of the file rather than a copy that goes stale in OpenBook. Upload a PDF when a document is not published anywhere online yet. **Maximum upload size is 10 MB per file.**
 
+Both forms are on the page, one under the other, so you can use whichever fits without switching anything.
+
 ### To add a link
 
-1. With **Add a link** selected, enter a **Title** — the clickable text residents will see (e.g., `FY2026 Adopted Budget`)
+1. Under **Add a link**, enter a **Title** — the clickable text residents will see (e.g., `FY2026 Adopted Budget`)
 2. Enter the **URL** — the full web address, starting with `https://`
 3. Optionally add a **Description** — a sentence explaining what the link contains
 4. Choose a **Category** — Budget Document, Meeting Minutes, Report, Press Release, or Other
@@ -207,12 +209,11 @@ Both appear together on the public page, grouped by category, each badged so res
 
 ### To upload a PDF
 
-1. Switch to **Upload a PDF**
-2. Drag the file into the upload box, or click **browse to select**
-3. Optionally give it a **Display Title** (defaults to the file name)
-4. Optionally add a **Description** — a one-line summary shown under the title on the public page, so residents know what the document is before they open it
-5. Choose a **Category**
-6. Click **Upload PDF**
+1. Under **Upload a PDF**, drag the file into the upload box, or click **browse to select**
+2. Optionally give it a **Display Title** (defaults to the file name)
+3. Optionally add a **Description** — a one-line summary shown under the title on the public page, so residents know what the document is before they open it
+4. Choose a **Category**
+5. Click **Upload PDF**
 
 If a file is over 10 MB, OpenBook tells you before it uploads. Either compress the PDF (most "reduce file size" or "optimize" options in Acrobat and Preview will do it) or host it on your website and add it as a link.
 

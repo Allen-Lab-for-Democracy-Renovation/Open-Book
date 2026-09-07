@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import HelpBox from "@/components/admin/HelpBox";
 import { MAX_PDF_SIZE, MAX_PDF_SIZE_LABEL } from "@/lib/upload-limits";
 
 interface Town {
@@ -65,21 +64,28 @@ export default function AdminDocumentsPage() {
   const [links, setLinks] = useState<SupportingLink[]>([]);
   const [pdfs, setPdfs] = useState<PdfDocument[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
   const [dragActive, setDragActive] = useState(false);
 
-  // Add form. Title, description, and category are shared by both kinds of
-  // resource, so switching tabs keeps whatever has already been typed.
-  const [addMode, setAddMode] = useState<"link" | "pdf">("link");
-  const [newTitle, setNewTitle] = useState("");
-  const [newDescription, setNewDescription] = useState("");
-  const [newCategory, setNewCategory] = useState("other");
-  const [newUrl, setNewUrl] = useState("");
+  // The two add forms are shown together and kept independent, so filling in
+  // one never clears the other or shows it the other's error.
+  const [linkTitle, setLinkTitle] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkDescription, setLinkDescription] = useState("");
+  const [linkCategory, setLinkCategory] = useState("other");
+  const [savingLink, setSavingLink] = useState(false);
+  const [linkError, setLinkError] = useState("");
+
+  const [pdfTitle, setPdfTitle] = useState("");
+  const [pdfDescription, setPdfDescription] = useState("");
+  const [pdfCategory, setPdfCategory] = useState("other");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [savingPdf, setSavingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState("");
 
   // Editing applies to links only — a PDF's file cannot be changed in place.
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState("");
   const [editTitle, setEditTitle] = useState("");
   const [editUrl, setEditUrl] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -115,20 +121,11 @@ export default function AdminDocumentsPage() {
     load();
   }, []);
 
-  const resetAddForm = () => {
-    setNewTitle("");
-    setNewDescription("");
-    setNewCategory("other");
-    setNewUrl("");
-    setSelectedFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
   const handleAddLink = async () => {
-    if (!town || !newTitle.trim() || !newUrl.trim()) return;
+    if (!town || !linkTitle.trim() || !linkUrl.trim()) return;
 
-    setSaving(true);
-    setError("");
+    setSavingLink(true);
+    setLinkError("");
 
     try {
       const res = await fetch("/api/links", {
@@ -136,70 +133,77 @@ export default function AdminDocumentsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           townId: town.id,
-          title: newTitle.trim(),
-          url: newUrl.trim(),
-          description: newDescription.trim() || null,
-          category: newCategory,
+          title: linkTitle.trim(),
+          url: linkUrl.trim(),
+          description: linkDescription.trim() || null,
+          category: linkCategory,
         }),
       });
 
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        setError(
+        setLinkError(
           data?.error || `Could not add that link (server error ${res.status})`
         );
         return;
       }
 
       setLinks((prev) => [...prev, data]);
-      resetAddForm();
+      setLinkTitle("");
+      setLinkUrl("");
+      setLinkDescription("");
+      setLinkCategory("other");
     } catch {
-      setError(
+      setLinkError(
         "Could not add that link. Please check your connection and try again."
       );
     } finally {
-      setSaving(false);
+      setSavingLink(false);
     }
   };
 
   const handleUploadPdf = async () => {
     if (!town || !selectedFile) return;
 
-    setSaving(true);
-    setError("");
+    setSavingPdf(true);
+    setPdfError("");
 
     if (selectedFile.size > MAX_PDF_SIZE) {
-      setError(
+      setPdfError(
         `This file is ${formatFileSize(selectedFile.size)}. The maximum is ${MAX_PDF_SIZE_LABEL}. For larger documents, host the file on your municipality's website and add it as a link instead.`
       );
-      setSaving(false);
+      setSavingPdf(false);
       return;
     }
 
     const formData = new FormData();
     formData.append("file", selectedFile);
     formData.append("townId", town.id);
-    if (newTitle.trim()) formData.append("title", newTitle.trim());
-    if (newDescription.trim())
-      formData.append("description", newDescription.trim());
-    formData.append("category", newCategory);
+    if (pdfTitle.trim()) formData.append("title", pdfTitle.trim());
+    if (pdfDescription.trim())
+      formData.append("description", pdfDescription.trim());
+    formData.append("category", pdfCategory);
 
     try {
       const res = await fetch("/api/pdf", { method: "POST", body: formData });
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        setError(data?.error || `Upload failed (server error ${res.status})`);
+        setPdfError(data?.error || `Upload failed (server error ${res.status})`);
         return;
       }
 
       setPdfs((prev) => [data, ...prev]);
-      resetAddForm();
+      setPdfTitle("");
+      setPdfDescription("");
+      setPdfCategory("other");
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     } catch {
-      setError("Upload failed. Please check your connection and try again.");
+      setPdfError("Upload failed. Please check your connection and try again.");
     } finally {
-      setSaving(false);
+      setSavingPdf(false);
     }
   };
 
@@ -228,6 +232,7 @@ export default function AdminDocumentsPage() {
 
   const startEditing = (link: SupportingLink) => {
     setEditingId(link.id);
+    setEditError("");
     setEditTitle(link.title);
     setEditUrl(link.url);
     setEditDescription(link.description || "");
@@ -238,8 +243,8 @@ export default function AdminDocumentsPage() {
   const cancelEditing = () => setEditingId(null);
 
   const handleSaveEdit = async (linkId: string) => {
-    setSaving(true);
-    setError("");
+    setSavingEdit(true);
+    setEditError("");
 
     try {
       const res = await fetch(`/api/links/${linkId}`, {
@@ -257,16 +262,16 @@ export default function AdminDocumentsPage() {
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        setError(data?.error || "Failed to update link");
+        setEditError(data?.error || "Failed to update link");
         return;
       }
 
       setLinks((prev) => prev.map((l) => (l.id === linkId ? data : l)));
       setEditingId(null);
     } catch {
-      setError("Failed to update link");
+      setEditError("Failed to update link");
     } finally {
-      setSaving(false);
+      setSavingEdit(false);
     }
   };
 
@@ -274,17 +279,17 @@ export default function AdminDocumentsPage() {
   // on them.
   const acceptFile = useCallback((file: File) => {
     if (file.type !== "application/pdf") {
-      setError("Only PDF files are allowed");
+      setPdfError("Only PDF files are allowed");
       return;
     }
     if (file.size > MAX_PDF_SIZE) {
-      setError(
+      setPdfError(
         `This file is ${formatFileSize(file.size)}. The maximum is ${MAX_PDF_SIZE_LABEL}. For larger documents, host the file on your municipality's website and add it as a link instead.`
       );
       return;
     }
     setSelectedFile(file);
-    setError("");
+    setPdfError("");
   }, []);
 
   const handleDrop = useCallback(
@@ -338,11 +343,6 @@ export default function AdminDocumentsPage() {
     );
   }
 
-  const canSubmit =
-    addMode === "link"
-      ? Boolean(newTitle.trim() && newUrl.trim())
-      : Boolean(selectedFile);
-
   return (
     <div className="space-y-10">
       <div>
@@ -355,247 +355,102 @@ export default function AdminDocumentsPage() {
         </p>
       </div>
 
-      <HelpBox title="Link or upload?" variant="info">
-        <p className="mb-2">
-          <strong>Add a link</strong> when the document already lives on your
-          municipality&apos;s website. There is no size limit, and residents
-          always get the current version of the file rather than a copy that
-          goes stale. This is the better option for most documents.
-        </p>
-        <p>
-          <strong>Upload a PDF</strong> when a document is not published
-          anywhere online yet. Maximum file size is {MAX_PDF_SIZE_LABEL}.
-        </p>
-      </HelpBox>
-
-      {error && (
-        <div
-          className="bg-red-50 border border-red-200 rounded-lg p-4"
-          role="alert"
-        >
-          <p className="text-sm text-red-600">{error}</p>
-        </div>
-      )}
-
-      {/* Add a resource */}
-      <section>
-        <h2 className="text-lg font-medium mb-4">Add a Resource</h2>
-
-        <div className="inline-flex rounded-md border border-gray-300 p-0.5 mb-5">
-          <button
-            type="button"
-            aria-pressed={addMode === "link"}
-            onClick={() => {
-              setAddMode("link");
-              setError("");
-            }}
-            className={`px-3 py-1.5 text-sm font-medium rounded transition-colors ${
-              addMode === "link"
-                ? "bg-gray-900 text-white"
-                : "text-gray-600 hover:text-gray-900"
-            }`}
-          >
-            Add a link
-          </button>
-          <button
-            type="button"
-            aria-pressed={addMode === "pdf"}
-            onClick={() => {
-              setAddMode("pdf");
-              setError("");
-            }}
-            className={`px-3 py-1.5 text-sm font-medium rounded transition-colors ${
-              addMode === "pdf"
-                ? "bg-gray-900 text-white"
-                : "text-gray-600 hover:text-gray-900"
-            }`}
-          >
-            Upload a PDF
-          </button>
-        </div>
+      {/* Add a resource — both options laid out together, link first because
+          it is the better choice for most documents. */}
+      <section className="space-y-4">
+        <h2 className="text-lg font-medium">Add a Resource</h2>
 
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (addMode === "link") handleAddLink();
-            else handleUploadPdf();
+            handleAddLink();
           }}
-          className="space-y-4"
+          className="bg-white border border-gray-200 rounded-lg p-5 space-y-4"
         >
-          {addMode === "link" ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="resource-title"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Title
-                </label>
-                <input
-                  id="resource-title"
-                  type="text"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="FY2026 Adopted Budget"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="resource-url"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  URL
-                </label>
-                <input
-                  id="resource-url"
-                  type="url"
-                  value={newUrl}
-                  onChange={(e) => setNewUrl(e.target.value)}
-                  placeholder="https://example.com/budget.pdf"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-            </div>
-          ) : (
-            <>
-              <div
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  dragActive
-                    ? "border-blue-400 bg-blue-50"
-                    : "border-gray-300 hover:border-gray-400"
-                }`}
-              >
-                {selectedFile ? (
-                  <div className="space-y-1">
-                    <svg
-                      className="mx-auto h-8 w-8 text-red-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
-                      />
-                    </svg>
-                    <p className="text-sm font-medium text-gray-700">
-                      {selectedFile.name}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {formatFileSize(selectedFile.size)}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedFile(null);
-                        if (fileInputRef.current)
-                          fileInputRef.current.value = "";
-                      }}
-                      className="text-xs text-red-500 hover:text-red-700 mt-1"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ) : (
-                  <div>
-                    <svg
-                      className="mx-auto h-10 w-10 text-gray-300"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
-                      />
-                    </svg>
-                    <p className="text-gray-600 font-medium mt-3">
-                      Drag and drop a PDF file
-                    </p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      or{" "}
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="text-blue-600 hover:underline"
-                      >
-                        browse to select
-                      </button>{" "}
-                      (PDF, max {MAX_PDF_SIZE_LABEL})
-                    </p>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="application/pdf"
-                      onChange={handleFileSelect}
-                      className="hidden"
-                      aria-label="Select PDF file"
-                    />
-                  </div>
-                )}
-              </div>
+          <div>
+            <h3 className="font-medium">Add a link</h3>
+            <p className="text-sm text-gray-500 mt-0.5">
+              Best when the document already lives on your municipality&apos;s
+              website. There is no size limit, and residents always get the
+              current version of the file rather than a copy that goes stale.
+            </p>
+          </div>
 
-              <div>
-                <label
-                  htmlFor="resource-title"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Display Title{" "}
-                  <span className="text-gray-500 font-normal">(optional)</span>
-                </label>
-                <input
-                  id="resource-title"
-                  type="text"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="e.g., FY2026 Adopted Budget — defaults to the file name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </>
+          {linkError && (
+            <div
+              className="bg-red-50 border border-red-200 rounded-md p-3"
+              role="alert"
+            >
+              <p className="text-sm text-red-600">{linkError}</p>
+            </div>
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label
-                htmlFor="resource-description"
+                htmlFor="link-title"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Title
+              </label>
+              <input
+                id="link-title"
+                type="text"
+                value={linkTitle}
+                onChange={(e) => setLinkTitle(e.target.value)}
+                placeholder="FY2026 Adopted Budget"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="link-url"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                URL
+              </label>
+              <input
+                id="link-url"
+                type="url"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                placeholder="https://example.com/budget.pdf"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="link-description"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Description{" "}
                 <span className="text-gray-500 font-normal">(optional)</span>
               </label>
               <input
-                id="resource-description"
+                id="link-description"
                 type="text"
-                value={newDescription}
-                onChange={(e) => setNewDescription(e.target.value)}
+                value={linkDescription}
+                onChange={(e) => setLinkDescription(e.target.value)}
                 placeholder="A short summary residents will see under the title"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
               <label
-                htmlFor="resource-category"
+                htmlFor="link-category"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Category
               </label>
               <select
-                id="resource-category"
-                value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value)}
+                id="link-category"
+                value={linkCategory}
+                onChange={(e) => setLinkCategory(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {CATEGORIES.map((c) => (
@@ -609,16 +464,186 @@ export default function AdminDocumentsPage() {
 
           <button
             type="submit"
-            disabled={saving || !canSubmit}
+            disabled={savingLink || !linkTitle.trim() || !linkUrl.trim()}
             className="px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
           >
-            {saving
-              ? addMode === "link"
-                ? "Adding..."
-                : "Uploading..."
-              : addMode === "link"
-                ? "Add Link"
-                : "Upload PDF"}
+            {savingLink ? "Adding..." : "Add Link"}
+          </button>
+        </form>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleUploadPdf();
+          }}
+          className="bg-white border border-gray-200 rounded-lg p-5 space-y-4"
+        >
+          <div>
+            <h3 className="font-medium">Upload a PDF</h3>
+            <p className="text-sm text-gray-500 mt-0.5">
+              For a document that is not published anywhere online yet. Maximum
+              file size is {MAX_PDF_SIZE_LABEL}.
+            </p>
+          </div>
+
+          {pdfError && (
+            <div
+              className="bg-red-50 border border-red-200 rounded-md p-3"
+              role="alert"
+            >
+              <p className="text-sm text-red-600">{pdfError}</p>
+            </div>
+          )}
+
+          <div
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+              dragActive
+                ? "border-blue-400 bg-blue-50"
+                : "border-gray-300 hover:border-gray-400"
+            }`}
+          >
+            {selectedFile ? (
+              <div className="space-y-1">
+                <svg
+                  className="mx-auto h-8 w-8 text-red-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+                  />
+                </svg>
+                <p className="text-sm font-medium text-gray-700">
+                  {selectedFile.name}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {formatFileSize(selectedFile.size)}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedFile(null);
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                  }}
+                  className="text-xs text-red-500 hover:text-red-700 mt-1"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div>
+                <svg
+                  className="mx-auto h-10 w-10 text-gray-300"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+                  />
+                </svg>
+                <p className="text-gray-600 font-medium mt-3">
+                  Drag and drop a PDF file
+                </p>
+                <p className="text-sm text-gray-500 mt-1">
+                  or{" "}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-blue-600 hover:underline"
+                  >
+                    browse to select
+                  </button>{" "}
+                  (PDF, max {MAX_PDF_SIZE_LABEL})
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  aria-label="Select PDF file"
+                />
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label
+              htmlFor="pdf-title"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Display Title{" "}
+              <span className="text-gray-500 font-normal">(optional)</span>
+            </label>
+            <input
+              id="pdf-title"
+              type="text"
+              value={pdfTitle}
+              onChange={(e) => setPdfTitle(e.target.value)}
+              placeholder="e.g., FY2026 Adopted Budget — defaults to the file name"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="pdf-description"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Description{" "}
+                <span className="text-gray-500 font-normal">(optional)</span>
+              </label>
+              <input
+                id="pdf-description"
+                type="text"
+                value={pdfDescription}
+                onChange={(e) => setPdfDescription(e.target.value)}
+                placeholder="A short summary residents will see under the title"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="pdf-category"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Category
+              </label>
+              <select
+                id="pdf-category"
+                value={pdfCategory}
+                onChange={(e) => setPdfCategory(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={savingPdf || !selectedFile}
+            className="px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
+          >
+            {savingPdf ? "Uploading..." : "Upload PDF"}
           </button>
         </form>
       </section>
@@ -758,14 +783,19 @@ export default function AdminDocumentsPage() {
                               />
                             </div>
                           </div>
+                          {editError && (
+                            <p className="text-sm text-red-600" role="alert">
+                              {editError}
+                            </p>
+                          )}
                           <div className="flex gap-2">
                             <button
                               type="button"
                               onClick={() => handleSaveEdit(link.id)}
-                              disabled={saving}
+                              disabled={savingEdit}
                               className="px-3 py-1.5 bg-gray-900 text-white rounded-md text-sm hover:bg-gray-800 disabled:opacity-50 transition-colors"
                             >
-                              {saving ? "Saving..." : "Save"}
+                              {savingEdit ? "Saving..." : "Save"}
                             </button>
                             <button
                               type="button"

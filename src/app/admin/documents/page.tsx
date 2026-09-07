@@ -94,6 +94,12 @@ export default function AdminDocumentsPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // `savingLink`/`savingPdf` drive the button's disabled state, but React
+  // applies them on the next render — a double-click fires again before that
+  // happens and creates a duplicate. These refs update synchronously.
+  const addingLinkRef = useRef(false);
+  const uploadingPdfRef = useRef(false);
+
   useEffect(() => {
     async function load() {
       try {
@@ -123,7 +129,9 @@ export default function AdminDocumentsPage() {
 
   const handleAddLink = async () => {
     if (!town || !linkTitle.trim() || !linkUrl.trim()) return;
+    if (addingLinkRef.current) return;
 
+    addingLinkRef.current = true;
     setSavingLink(true);
     setLinkError("");
 
@@ -159,6 +167,7 @@ export default function AdminDocumentsPage() {
         "Could not add that link. Please check your connection and try again."
       );
     } finally {
+      addingLinkRef.current = false;
       setSavingLink(false);
     }
   };
@@ -166,16 +175,18 @@ export default function AdminDocumentsPage() {
   const handleUploadPdf = async () => {
     if (!town || !selectedFile) return;
 
-    setSavingPdf(true);
-    setPdfError("");
-
     if (selectedFile.size > MAX_PDF_SIZE) {
       setPdfError(
         `This file is ${formatFileSize(selectedFile.size)}. The maximum is ${MAX_PDF_SIZE_LABEL}. For larger documents, host the file on your municipality's website and add it as a link instead.`
       );
-      setSavingPdf(false);
       return;
     }
+
+    if (uploadingPdfRef.current) return;
+
+    uploadingPdfRef.current = true;
+    setSavingPdf(true);
+    setPdfError("");
 
     const formData = new FormData();
     formData.append("file", selectedFile);
@@ -203,6 +214,7 @@ export default function AdminDocumentsPage() {
     } catch {
       setPdfError("Upload failed. Please check your connection and try again.");
     } finally {
+      uploadingPdfRef.current = false;
       setSavingPdf(false);
     }
   };
@@ -888,6 +900,18 @@ export default function AdminDocumentsPage() {
                               {pdf.fileName} &middot;{" "}
                               {formatFileSize(pdf.fileSize)}
                             </p>
+                            {pdf.filePath && (
+                              // Uploaded before documents moved into the
+                              // database. The file may still be on disk, or may
+                              // have been discarded by a redeploy — an admin
+                              // cannot tell from here, so say what to check.
+                              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 mt-2">
+                                Uploaded before documents were stored in the
+                                database. Use <strong>View</strong> to check it
+                                still opens — if it does not, delete it and
+                                upload the file again.
+                              </p>
+                            )}
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             <a

@@ -1,301 +1,257 @@
 # OpenBook Guide for Finance Staff
 
-This guide is for the person in your town's finance office who manages the OpenBook admin panel. You do not need any technical knowledge. Everything is done through a web browser, just like updating any other website.
+This guide is for whoever in your finance office keeps the budget portal up to date. You do not need any technical background. Everything happens in a web browser, like updating any other website.
+
+**Start to finish, the first setup takes about an hour.** After that, updating the portal each year takes about twenty minutes.
 
 ---
 
-## Getting Started
+## Before You Start
 
-Your IT contact will give you:
-- The web address for your admin panel (e.g., `https://budget.yourtown.gov/admin/login`)
-- An email address and password to log in
+Your IT contact will give you two things:
 
-Bookmark the admin panel address. You will return to it whenever you need to update the portal.
+- The address of your admin panel, something like `https://budget.yourtown.gov/admin/login`
+- An email and password to sign in
+
+Bookmark that address. It is where you will do everything in this guide.
+
+You will also want your budget data exported from your accounting system as **CSV** or **Excel** files. Most systems have an "Export" or "Download" option that produces one of these. If you can open it in Excel, it will work.
 
 ---
 
-## The Admin Panel At a Glance
+## What the Admin Panel Looks Like
 
-After logging in, you will see a navigation bar at the top of the page with these tabs:
+After signing in, a row of tabs runs across the top of every page:
 
-| Tab | What It Does |
+| Tab | What it is for |
 |---|---|
-| **Settings** | Set up your town's name, colors, logo, and contact info |
-| **Upload** | Add budget data from a spreadsheet file |
-| **Data** | View, replace, or delete uploaded files |
-| **Tooltips** | Add plain-language explanations for budget categories and line items |
-| **Documents** | Add links to external resources and upload PDFs residents can download |
-| **Questions** | View questions residents have submitted through the portal |
-| **Requests** | Review capital expenditure requests submitted by department staff |
-| **Transfer** | Hand admin access to a new person |
-| **Preview** | Open your public portal in a new tab to see what residents see |
+| **Settings** | Your town's name, color, logo, and contact email |
+| **Upload** | Adding budget data from a spreadsheet |
+| **Data** | Seeing what you have uploaded, and replacing or removing it |
+| **Tooltips** | Plain-language explanations residents see on the portal |
+| **Documents** | Links and PDFs residents can open |
+| **FAQs** | Questions and answers shown on the portal |
+| **Users** | Inviting department staff who submit capital requests |
+| **Requests** | Reviewing capital requests those staff submit |
+| **Transfer** | Handing your admin account to someone else |
+| **Preview** | Opens your public portal in a new tab |
 
-Work through these tabs in order the first time. After that, you will mostly use **Upload** once a year and the other tabs as needed.
+The first time through, work along the tabs in the order below. After that you will mostly use **Upload** once a year.
 
 ---
 
-## Step 1 — Configure Your Town Settings
+## Step 1 — Fill In Your Town Settings
 
-Go to the **Settings** tab.
+Go to **Settings**.
 
-Fill in each field:
+![The Settings tab, with fields for town name, brand color, logo, contact email, and a description of the portal](https://raw.githubusercontent.com/Allen-Lab-for-Democracy-Renovation/Open-Book/main/docs/screenshots/admin-settings.png)
 
-**Town Name**
-Type the full name of your town as you want it to appear on the public portal. Example: `Town of Sutton`. The URL slug (the web address for your portal) is created automatically from this name, but you can edit it.
+There are five things to fill in:
 
-**URL Slug**
-This is the last part of your portal's web address. If your slug is `sutton`, your portal will be at `budget.yourtown.gov/sutton`. It is auto-generated from your town name. Use only lowercase letters and dashes — no spaces or symbols.
+**Town Name** — how your municipality should appear on the portal, for example `Riverton`. Enter just the name; the portal adds words like "Town of" where it needs them, and this way it reads correctly for a city or district too. Correcting the name later is safe: your portal's web address is set when the portal is first created and does not change, so existing links keep working.
 
-**Brand Color**
-Click the color swatch to open a color picker, or type a hex color code (like `#1e3a5f`). This color appears on charts and links throughout your public portal. We recommend using your town's official color.
+**Brand Color** — click the color square to pick a color, or type a hex code like `#1e5b4f`. This colors the banner, buttons, and charts. Your town's official color makes the portal look like it belongs to you.
 
-**Town Logo**
-Click **Choose File** and select your town seal or logo from your computer. Accepted formats: PNG, JPEG, or WebP. Maximum file size: 5 MB. The logo appears as the browser tab icon and on pages of your portal.
+**Town Logo** — click **Choose File** and pick your seal or logo. PNG, JPEG, or WebP, up to 10 MB. Large images are shrunk for you, so do not worry about the size of the original. The logo appears in the top-left corner of every page, next to your town name.
 
-**Contact Email**
-Enter the email address where residents should send budget questions. This is displayed publicly on your portal. Use a department address, not a personal one, such as `finance@yourtown.gov`.
+**Contact Email** — where residents should send budget questions. This is shown publicly, so use a department address like `finance@yourtown.gov`, not a personal one.
 
-**About This Portal**
-Write one or two sentences describing the portal for residents. This appears on your portal's main page. Example: *"Sutton's budget transparency portal lets residents explore how the town spends and collects money each fiscal year."*
+**About This Portal** — one or two sentences telling residents what this site is. For example: *"Riverton's budget portal lets residents explore how the town raises and spends money each fiscal year."*
 
-When you are finished, click **Save Settings** (or **Create Town & Upload Data** if this is your first time).
+Click **Save Settings**. Changes appear on the public portal right away.
 
 ---
 
 ## Step 2 — Upload Your Budget Data
 
-Go to the **Upload** tab. You will do this once per fiscal year, or whenever the budget is updated.
+Go to **Upload**. You will repeat this step once for each kind of data you have.
 
-OpenBook accepts Excel files (`.xlsx`) and CSV files (`.csv`) up to 10 MB. These are the same formats your accounting software exports. You will upload a separate file for each data type.
+![The Upload tab, showing the three-step explanation and the category dropdown](https://raw.githubusercontent.com/Allen-Lab-for-Democracy-Renovation/Open-Book/main/docs/screenshots/admin-upload.png)
 
-### The upload has three steps:
+### 2a. Pick what you are uploading
 
----
-
-### Step 2a — Choose a Category
-
-Use the dropdown to select what type of data you are uploading:
+Choose one from the dropdown:
 
 - **Expenses** — how the town spends money
 - **Revenues** — where the town's money comes from
-- **Capital Projects** — large, one-time expenditures
-- **Reserves** — stabilization funds and free cash (stored but not yet shown on the public portal)
+- **Capital Projects** — large one-time purchases and construction
+- **Reserves** — stabilization funds, free cash, and other balances
 
-After you pick a category, a sample table appears showing what your file should look like. Your column names do not need to match the sample exactly — OpenBook will help you match them in the next step.
+A sample table appears showing roughly what that file should contain. **Your column names do not have to match it.** You will connect your columns to OpenBook's in the next step.
 
----
+### 2b. Add your file
 
-### Step 2b — Upload Your File
+Drag your file onto the upload box, or click to browse for it. CSV or Excel, up to 10 MB.
 
-Drag your file into the upload box, or click inside the box to browse for the file on your computer. OpenBook will read the file and show you:
-- How many rows were detected
-- How many columns were found
-- A preview of the first two rows
+OpenBook reads the file and tells you how many rows and columns it found, with a preview of the first two rows so you can confirm it read the right file.
 
-If you see an error at this stage, the most common causes are:
-- The file has a title row above the column headers (delete it in Excel first)
-- The file is not saved as `.csv` or `.xlsx`
-- The file is larger than 10 MB
+> **If you get an error here,** it is almost always one of three things: the spreadsheet has a title row above the column headers (delete that row in Excel and save again), the file is not a `.csv` or `.xlsx`, or the file is over 10 MB.
 
----
+### 2c. Confirm the columns
 
-### Step 2c — Map Your Columns
+![The column mapping step, with each spreadsheet column matched to an OpenBook field](https://raw.githubusercontent.com/Allen-Lab-for-Democracy-Renovation/Open-Book/main/docs/screenshots/admin-column-mapping.png)
 
-OpenBook looks at your column headers and tries to automatically match them to the fields it needs. Columns it recognized automatically are labeled **Auto** in green.
+OpenBook reads your column headers and guesses what each one is. Anything it matched on its own is marked **Auto** in green. A green box at the top lists which columns this kind of data actually needs.
 
-Review each column and use the dropdown next to it to confirm or correct the match. If a column is not relevant, choose **Skip this column**.
+Go down the list and check each dropdown. If a guess is wrong, change it. If a column is not needed, choose **Skip this column**.
 
-**For any column that contains dollar amounts**, you must also:
-1. Set the **Fiscal Year** — type the year (e.g., `2026`)
-2. Set the **Type** — choose either `Budget` (a planned amount) or `Actual` (money already spent)
+**Every column of dollar amounts needs two more things:**
 
-A yellow warning box will tell you if anything required is missing before you can save.
+1. **Fiscal Year** — type the year, like `2026`
+2. **Type** — choose **Budget** (planned) or **Actual** (already spent)
 
-**Required fields by category:**
+This is what keeps planned and actual money separate on the portal, so the two are never added together. A column named `FY2025 Budget` and one named `FY2025 Actual` stay in their own columns for residents.
 
-| Category | Required |
-|---|---|
-| Expenses | Function Area; at least one dollar amount column set to "Budget" |
-| Revenues | Category; at least one dollar amount column set to "Budget" |
-| Capital Projects | Department; Purpose/Project; Funding Source; at least one dollar amount column |
-| Reserves | None required (data is stored but not displayed publicly yet) |
+If something required is still missing, a yellow box tells you what before you can continue.
 
-When everything looks correct and no warnings remain, click **Confirm & Save Data**. You will be taken to the **Data** tab when the upload is complete.
+When the warnings are gone, click **Confirm & Save Data**.
 
-> **Tip:** You can upload multiple files. For example, upload your expenses file first, then come back and upload your revenues file. Each category lives independently on the portal.
+> **Tip:** Upload one file at a time. Do expenses first, then come back for revenues, and so on. Each kind of data stands on its own.
 
 ---
 
-## Step 3 — Check Your Uploaded Data
+## Step 3 — Check What You Uploaded
 
-Go to the **Data** tab.
+Go to **Data**.
 
-This page lists every file you have uploaded, with the file name, category, number of rows, status, and date. Status will show **mapped** (green) when data was saved successfully.
+![The Data tab listing each uploaded file with its category, row count, and status](https://raw.githubusercontent.com/Allen-Lab-for-Democracy-Renovation/Open-Book/main/docs/screenshots/admin-data.png)
 
-From this page you can:
-- **Replace** a file — deletes the old data and opens the upload page so you can upload a corrected version
-- **Delete** a specific file — permanently removes that upload and its data from the portal
-- **Delete All Data** — removes everything and starts fresh (requires a confirmation click)
+Every file you have uploaded is listed with its category, row count, and date. **Mapped** in green means the data saved correctly.
 
-> **Important:** Deleting an upload immediately removes that data from the public portal. If your portal is live, residents will no longer see that information until you upload a replacement.
+From here you can **Replace** a file (removes the old version and takes you back to Upload), **Delete** one upload, or **Delete All Data** and start over.
 
----
-
-## Step 4 — Preview Your Portal
-
-Click **Preview** in the top navigation bar. This opens your public portal in a new browser tab so you can see exactly what residents will see.
-
-Check that:
-- The charts and summary numbers look correct
-- The town name, color, and logo appear as expected
-- Data is showing for each category you uploaded
-
-Come back to the admin panel to make any corrections.
+> **Careful:** deleting takes that data off the public portal immediately. If your portal is already live, residents stop seeing it until you upload a replacement.
 
 ---
 
-## Step 5 — Add Tooltips (Optional but Recommended)
+## Step 4 — Look at Your Portal
 
-Go to the **Tooltips** tab.
+Click **Preview** in the top bar. Your public portal opens in a new tab, exactly as residents see it.
 
-Tooltips are short explanations that appear when a resident hovers over or taps on a budget category or line item on the public portal. A small `?` icon marks anything that has a tooltip. This is one of the most valuable things you can do to make the budget understandable for residents.
+![The public portal overview page, with the banner, at-a-glance figures, and sections for expenses, revenues, and capital](https://raw.githubusercontent.com/Allen-Lab-for-Democracy-Renovation/Open-Book/main/docs/screenshots/portal-overview.png)
 
-### Category Explainers
+Check that the totals look about right, that your name, color, and logo are correct, and that each kind of data you uploaded is showing. Then switch back to the admin tab to fix anything that looks off.
 
-These are explanations for broad budget groupings, like "Public Safety" or "General Government."
+Residents get a page for each kind of data. Expenses, for instance, opens with the big picture and a searchable table underneath:
 
-1. Use the dropdown to choose a category from your uploaded data
-2. Type a one- or two-sentence explanation in plain language
+![The public expenses page, with summary tiles, a pie chart, a multi-year trend chart, and a detailed table](https://raw.githubusercontent.com/Allen-Lab-for-Democracy-Renovation/Open-Book/main/docs/screenshots/portal-expenses.png)
+
+---
+
+## Step 5 — Add Plain-Language Explanations
+
+Go to **Tooltips**. This is optional, and it is the single most useful thing you can do for residents.
+
+![The Tooltips tab, with a dropdown of budget categories and a box for the explanation](https://raw.githubusercontent.com/Allen-Lab-for-Democracy-Renovation/Open-Book/main/docs/screenshots/admin-tooltips.png)
+
+A tooltip is a short explanation that appears when someone hovers over or taps a budget category. A small `?` marks anything that has one.
+
+**Category explainers** cover broad groupings like "Public Safety" or "Employee Benefits":
+
+1. Pick a category from the dropdown
+2. Write one or two sentences in everyday language
 3. Click **Save**
 
-Categories that already have an explanation show a `●` dot in the dropdown.
+Categories that already have an explanation are marked with a `●`.
 
-**Example:** For the category "Unclassified," you might write: *"Includes town-wide costs like employee health insurance, retirement contributions, and liability insurance that don't belong to a single department."*
+> **Example.** For "Employee Benefits": *"Town-wide costs like health insurance and retirement assessments that are not charged to a single department."*
 
-### Line Item Hover Text
+**Line item hover text** works the same way, for individual rows like "Cherry Sheet Assessments."
 
-These are explanations for individual rows in the budget tables, like "Cherry Sheet Assessments" or "Debt Service."
+To remove a tooltip, clear the box and save.
 
-1. Use the dropdown to choose a line item
-2. Type a short explanation
-3. Click **Save**
-
-To remove a tooltip, clear the text field and click Save.
+Keep them short. One or two sentences get read; a paragraph does not. Write for someone who has never seen a municipal budget — the jargon you use every day is exactly what needs explaining.
 
 ---
 
-## Step 6 — Add Documents & Resources (Optional)
+## Step 6 — Add Documents and Links
 
-Go to the **Documents** tab. This is the admin side of the public **Documents & Resources** page, and it holds both kinds of resource in one place:
+Go to **Documents**. This one tab holds everything on your portal's public Documents & Resources page: links to files elsewhere, and PDFs you upload here.
 
-- **Links** point residents to a document that already lives on your municipality's website or another site.
-- **PDFs** are files you upload to OpenBook directly.
+![The Documents tab, with the add-a-link form above the upload-a-PDF form, and everything already added listed below](https://raw.githubusercontent.com/Allen-Lab-for-Democracy-Renovation/Open-Book/main/docs/screenshots/admin-documents.png)
 
-Both appear together on the public page, grouped by category, each badged so residents can tell a link from a downloadable file.
+### Which one should you use?
 
-### Link or upload?
+**Link to it whenever the document is already on your website.** There is no size limit, and residents always get the current version instead of a copy that goes stale here. **Upload a PDF** only when a document is not online anywhere yet.
 
-**Prefer a link whenever the document is already online.** There is no size limit, and residents always get the current version of the file rather than a copy that goes stale in OpenBook. Upload a PDF when a document is not published anywhere online yet. **Maximum upload size is 10 MB per file.**
+Both forms are on the page, one under the other. Use whichever fits.
 
-Both forms are on the page, one under the other, so you can use whichever fits without switching anything.
+### Adding a link
 
-### To add a link
-
-1. Under **Add a link**, enter a **Title** — the clickable text residents will see (e.g., `FY2026 Adopted Budget`)
-2. Enter the **URL** — the full web address, starting with `https://`
-3. Optionally add a **Description** — a sentence explaining what the link contains
-4. Choose a **Category** — Budget Document, Meeting Minutes, Report, Press Release, or Other
+1. Enter a **Title** — what residents will click, like `FY2026 Adopted Budget`
+2. Enter the **URL**, starting with `https://`
+3. Add a **Description** if it helps — one line saying what the document is
+4. Pick a **Category**
 5. Click **Add Link**
 
-### To upload a PDF
+### Uploading a PDF
 
-1. Under **Upload a PDF**, drag the file into the upload box, or click **browse to select**
-2. Optionally give it a **Display Title** (defaults to the file name)
-3. Optionally add a **Description** — a one-line summary shown under the title on the public page, so residents know what the document is before they open it
-4. Choose a **Category**
+1. Drag the file onto the upload box, or click **browse to select**
+2. Add a **Display Title** if you want something other than the file name
+3. Add a **Description** if it helps
+4. Pick a **Category**
 5. Click **Upload PDF**
 
-If a file is over 10 MB, OpenBook tells you before it uploads. Either compress the PDF (most "reduce file size" or "optimize" options in Acrobat and Preview will do it) or host it on your website and add it as a link.
+Maximum size is 10 MB. If a file is larger, OpenBook tells you before it uploads. Either shrink the PDF (the "reduce file size" or "optimize" option in Acrobat or Preview usually does it) or put it on your website and add it as a link.
 
-### Managing what you have added
+### Changing what you have added
 
-Everything you have added is listed under **On Your Portal**, grouped by category in the same order residents see. Links can be edited in place with **Edit**, and given a **Sort Order** to control where they appear within their category. **Delete** removes a link or permanently removes an uploaded file. **Open** and **View** show you the resource itself.
+Everything is listed under **On Your Portal**, grouped by category the same way residents see it, each marked as a link or a PDF. **Edit** changes a link, including its **Sort Order** if you want it higher or lower in its category. **Delete** removes it. **Open** and **View** show you the document itself.
 
----
+Here is how it reaches residents:
 
-## Responding to Resident Questions
-
-Go to the **Questions** tab.
-
-This tab shows questions that were previously submitted through the portal. New questions from residents are now directed to your contact email directly (the email you set in Settings), so you will receive them in your inbox like any other email.
-
-The Questions tab is useful for reviewing older submissions. You can filter by status (New, Read, Replied), mark questions as read, and delete spam or off-topic messages.
+![The public Documents & Resources page, with links and PDFs grouped by category](https://raw.githubusercontent.com/Allen-Lab-for-Democracy-Renovation/Open-Book/main/docs/screenshots/portal-documents.png)
 
 ---
 
-## Reviewing Capital Requests from Staff
+## Answering Resident Questions
 
-Go to the **Requests** tab.
+Residents' questions go straight to the Contact Email you set in Settings, so they arrive in your inbox like any other email.
 
-If your town uses the staff portal feature, department staff can submit capital expenditure requests through a separate login. This tab shows all those requests in a table with:
-- Department name
-- Purpose of the request
-- Dollar amount
-- Staff member's name
-- Submission date
-- Current status
-
-Click any row to expand it and see the full details, including description, justification, and proposed funding source.
-
-### To take action on a request:
-
-1. Click the row to expand it
-2. Optionally type **Admin Notes** — these are visible to the staff member
-3. Click one of the three action buttons:
-   - **Approve** — marks the request as approved
-   - **Deny** — marks the request as denied
-   - **Under Review** — marks it as in progress
-
-Status changes are visible to staff immediately when they log into the staff portal.
+The **FAQs** tab is where you publish questions and answers on the portal itself. If the same question keeps arriving, answering it there saves you replying again.
 
 ---
 
-## Transferring Admin Access to a New Person
+## Reviewing Capital Requests from Departments
 
-Go to the **Transfer** tab.
+Skip this section unless your town uses the staff portal.
 
-If you are leaving your role and a new person is taking over, use this tab to create a new admin account and hand access over cleanly.
+Department heads can sign in separately and submit capital requests. They appear in the **Requests** tab with the department, purpose, amount, who submitted it, and the date.
 
-1. Enter the new admin's **name**
-2. Enter their **email address**
-3. Create a **password** for them (at least 8 characters)
-4. Confirm the password
-5. Click **Transfer Account**
-6. Click **Confirm Transfer** when the warning appears
+Click any row to open it and read the full description, justification, and proposed funding source. Then optionally type **Admin Notes** (the staff member sees these) and choose **Approve**, **Deny**, or **Under Review**. They see the change the next time they sign in.
 
-Your account will be deleted and the new account will be created. The new admin should go to the login page and sign in with their email and the password you created.
-
-> **Important:** This action cannot be undone. Make sure you have shared the new login credentials with the incoming admin before confirming.
+To invite department staff, use the **Users** tab: enter their email, click **Create Invite**, and send them the link that gets copied to your clipboard. Each link works once.
 
 ---
 
-## Updating the Budget Each Year
+## Handing Over to Someone Else
 
-At the start of each fiscal year, here is the recommended process:
+Go to **Transfer** when you are leaving the role.
 
-1. Export your new budget data from your financial system as CSV or Excel files
-2. Go to **Data** and delete the previous year's uploads (or keep them for year-over-year comparison — OpenBook can display multiple years)
-3. Go to **Upload** and upload the new files
-4. Go to **Preview** to confirm everything looks right
-5. Review your **Tooltips** — some may need updating if categories changed
+Enter the new person's name, email, and a password for them (at least 8 characters), then click **Transfer Account** and confirm.
 
-That's it. The portal updates immediately when new data is saved.
+> **This cannot be undone.** Your account is deleted and theirs is created. Give them the email and password before you confirm, and have them sign in and change the password.
 
 ---
 
-## Tips
+## Updating the Portal Each Year
 
-- **Keep tooltips short.** One or two sentences is ideal. Long explanations tend not to be read.
-- **Use your brand color.** A color that matches your town's official palette makes the portal look more official and trustworthy.
-- **Upload multiple years.** If you have actual spending data from previous years alongside this year's budget, upload them all. OpenBook will show year-over-year trend charts automatically.
-- **Test on a phone.** The portal works on mobile devices. Check Preview on your phone to make sure everything looks good for residents browsing on the go.
+Once a year, when the new budget is adopted:
+
+1. Export the new data from your accounting system
+2. Go to **Upload** and upload each file, the same way as the first time
+3. Go to **Preview** and check it over
+4. Look at your **Tooltips** if any category names changed
+
+**Keep the previous years.** You do not have to delete anything. When the portal has more than one year, it shows year-over-year comparisons and trend charts automatically, which is most of what residents want to know.
+
+---
+
+## A Few Things Worth Knowing
+
+- **Upload several years if you have them.** Trend charts and change columns appear on their own once there is more than one year of data.
+- **Check it on your phone.** Many residents will. Open Preview on your phone and scroll through.
+- **Nothing is public until you publish.** Take your time getting it right.
+- **The Budget Book tab prints.** It assembles your data into a formatted document you can print or save as a PDF for meetings, and it can include the prior year with the change from year to year.
+
+![The Budget Book view, a printable summary of the budget](https://raw.githubusercontent.com/Allen-Lab-for-Democracy-Renovation/Open-Book/main/docs/screenshots/portal-budget-book.png)

@@ -251,9 +251,33 @@ Point them to the **Finance Staff Guide** in this wiki. Your involvement from th
 
 ## Applying Code Updates
 
-When the OpenBook team releases updates, here is how to apply them:
+OpenBook is developed continuously, and fixes reach your portal only when you update your copy of the code. Plan to do this once or twice a year, and whenever you hear that a bug affecting you has been fixed.
 
-### On your own server:
+### If you forked the repository to your town's GitHub account
+
+A fork does **not** update itself. Your hosting platform redeploys when *your fork* changes, and your fork only changes when you sync it.
+
+The simplest way, no command line needed:
+
+1. Open your fork on GitHub
+2. If it is behind, a banner reads *"This branch is N commits behind Allen-Lab-for-Democracy-Renovation:main"*
+3. Click **Sync fork**, then **Update branch**
+
+That commit lands on your fork, and Vercel, Railway, or Render redeploys automatically within a few minutes. Watch the deployment finish before telling staff it is done.
+
+The command-line equivalent, if you cloned your fork locally:
+
+```bash
+git remote add upstream https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book.git
+git fetch upstream
+git checkout main
+git merge upstream/main
+git push origin main
+```
+
+You only need the `git remote add` line the first time.
+
+### If you cloned the project directly onto your own server
 
 ```bash
 git pull origin main
@@ -262,11 +286,15 @@ npm run build
 pm2 restart openbook
 ```
 
-(`npm run build` applies any new database migrations automatically — no separate Prisma command needed.)
+`npm run build` applies any new database migrations automatically — there is no separate Prisma command to run.
 
-### On Railway or Render:
+### What updating does not touch
 
-If you connected the service to the GitHub repository directly, updates deploy automatically when the repository is updated. Otherwise, trigger a manual redeploy from the platform dashboard.
+Everything your town has entered — budget data, tooltips, documents, settings, accounts — lives in your Postgres database, not in the code. Updating the code never touches it. New database migrations run automatically during the build and are designed to preserve existing data.
+
+### If you have changed the code yourself
+
+If you edited the code (for example, to change wording or styling), syncing may report a merge conflict where your edits and the project's overlap. Resolve the conflict as you would in any Git repository. Keeping local changes small and in as few files as possible makes this much easier a year later.
 
 ---
 

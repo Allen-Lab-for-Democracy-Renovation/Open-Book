@@ -2,6 +2,8 @@
 
 Welcome to the OpenBook documentation. OpenBook is a free, open-source budget transparency portal for municipalities. This wiki contains step-by-step guides for everyone involved in setting up and using OpenBook.
 
+![The public portal, showing the banner, headline figures, and sections for expenses, revenues, and capital](https://raw.githubusercontent.com/Allen-Lab-for-Democracy-Renovation/Open-Book/main/docs/screenshots/portal-overview.png)
+
 ---
 
 ## Choose Your Guide

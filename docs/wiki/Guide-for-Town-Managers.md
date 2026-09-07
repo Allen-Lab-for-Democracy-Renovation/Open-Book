@@ -53,8 +53,7 @@ What IT does:
 The person in your finance office who manages the budget data logs into the OpenBook admin panel from any web browser and:
 - Uploads the budget spreadsheet each fiscal year
 - Adds plain-language explanations for budget categories
-- Uploads PDF documents residents might want (adopted budget, meeting minutes, audit reports)
-- Adds links to relevant external resources
+- Adds the documents residents might want (adopted budget, meeting minutes, audit reports) — either as links to files already on your website, or uploaded to OpenBook directly
 - Responds to questions residents submit through the portal
 
 This does not require any technical knowledge. It is a web form, similar to updating a website.

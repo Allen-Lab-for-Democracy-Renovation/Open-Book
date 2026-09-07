@@ -3,6 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import HelpBox from "@/components/admin/HelpBox";
+import {
+  MAX_LOGO_SOURCE_SIZE,
+  MAX_LOGO_SOURCE_SIZE_LABEL,
+} from "@/lib/upload-limits";
 
 interface Town {
   id: string;
@@ -120,6 +124,13 @@ export default function SetupPage() {
     try {
       if (!file.type.startsWith("image/")) {
         setError("Logo must be a PNG, JPEG, or WebP image");
+        return;
+      }
+
+      if (file.size > MAX_LOGO_SOURCE_SIZE) {
+        setError(
+          `This image is ${(file.size / 1024 / 1024).toFixed(1)} MB. The maximum is ${MAX_LOGO_SOURCE_SIZE_LABEL}. Please save a smaller copy and try again.`
+        );
         return;
       }
 
@@ -330,7 +341,7 @@ export default function SetupPage() {
           <p className="text-xs text-gray-500 mt-1">
             {logoUploading
               ? "Uploading..."
-              : "Upload your town seal or logo. PNG, JPEG, or WebP. Large images are resized automatically."}
+              : `Upload your seal or logo. PNG, JPEG, or WebP, up to ${MAX_LOGO_SOURCE_SIZE_LABEL}. Large images are resized automatically.`}
           </p>
         </div>
 

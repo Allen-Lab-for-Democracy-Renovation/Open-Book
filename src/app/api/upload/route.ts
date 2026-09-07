@@ -4,8 +4,10 @@ import { parseCSV, parseExcel, cleanRows } from "@/lib/parser";
 import { detectColumns } from "@/lib/column-detector";
 import type { DataCategory } from "@/types";
 import { requireAdmin } from "@/lib/auth";
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+import {
+  MAX_DATA_FILE_SIZE,
+  MAX_DATA_FILE_SIZE_LABEL,
+} from "@/lib/upload-limits";
 
 interface ValidationError {
   field: string;
@@ -32,10 +34,10 @@ export async function POST(request: Request) {
   const validationErrors: ValidationError[] = [];
 
   // File size check
-  if (file.size > MAX_FILE_SIZE) {
+  if (file.size > MAX_DATA_FILE_SIZE) {
     validationErrors.push({
       field: "file",
-      message: `File is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 10MB.`,
+      message: `File is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum size is ${MAX_DATA_FILE_SIZE_LABEL}.`,
     });
   }
 

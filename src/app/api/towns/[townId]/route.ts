@@ -2,6 +2,25 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 
+// The list endpoint deliberately omits the heavier fields — logoUrl holds a
+// data URL — so anything that needs the whole record reads it from here.
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ townId: string }> }
+) {
+  const admin = await requireAdmin();
+  if (admin instanceof NextResponse) return admin;
+
+  const { townId } = await params;
+  const town = await prisma.town.findUnique({ where: { id: townId } });
+
+  if (!town) {
+    return NextResponse.json({ error: "Town not found" }, { status: 404 });
+  }
+
+  return NextResponse.json(town);
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ townId: string }> }

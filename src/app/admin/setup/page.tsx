@@ -94,8 +94,12 @@ export default function SetupPage() {
         const res = await fetch("/api/towns");
         const towns = await res.json();
         if (towns.length > 0) {
-          // Load full town data
-          const t = towns[0] as Town;
+          // The list endpoint returns a summary. Read the full record, or the
+          // fields it leaves out would load blank here and then be saved back
+          // as blanks — silently wiping the logo, contact email, and about
+          // text the next time an admin changed anything else.
+          const full = await fetch(`/api/towns/${towns[0].id}`);
+          const t = (full.ok ? await full.json() : towns[0]) as Town;
           setTown(t);
           setName(t.name);
           setSlug(t.slug);

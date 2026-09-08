@@ -6,7 +6,9 @@ This guide is written for Town Managers, Town Administrators, Finance Directors,
 
 ## What Is OpenBook?
 
-OpenBook is a free, open-source tool that gives your town a public website where residents can explore the town budget in plain language. Instead of handing residents a dense PDF spreadsheet, OpenBook turns your existing budget data into an interactive portal with charts, searchable tables, and plain-language explanations.
+OpenBook is a free, open-source tool that gives your municipality a public website where residents can explore the budget in plain language. Instead of handing residents a dense PDF spreadsheet, OpenBook turns the budget data you already produce into an interactive portal with charts, searchable tables, and plain-language explanations.
+
+![The public portal, showing the banner, headline figures, and sections for expenses, revenues, and capital](https://raw.githubusercontent.com/Allen-Lab-for-Democracy-Renovation/Open-Book/main/docs/screenshots/portal-overview.png)
 
 Residents can:
 - See a visual overview of town spending and revenues with charts and summaries
@@ -15,8 +17,13 @@ Residents can:
 - Explore capital projects and their funding sources
 - Download budget data as a spreadsheet
 - Print a complete budget book
+- See reserve and stabilization fund balances over time
 - Access supporting documents and links your office provides
 - Send questions directly to your finance office
+
+Every page is built for someone who has never read a municipal budget. Spending opens with the big picture and lets residents drill down as far as individual line items:
+
+![The public expenses page, with summary figures, a pie chart, a multi-year trend, and a searchable table](https://raw.githubusercontent.com/Allen-Lab-for-Democracy-Renovation/Open-Book/main/docs/screenshots/portal-expenses.png)
 
 ---
 
@@ -48,6 +55,8 @@ What IT does:
 
 **They do not need to be involved in day-to-day operations.**
 
+They should, however, plan to pull in OpenBook updates once or twice a year. Your portal runs from your own copy of the software, so improvements and fixes made to the project do not reach your site until someone updates that copy. The IT guide explains how; it takes a few minutes.
+
 ### Role 2: Finance Office / Budget Staff (Ongoing — A Few Hours Per Year)
 
 The person in your finance office who manages the budget data logs into the OpenBook admin panel from any web browser and:
@@ -74,7 +83,7 @@ The four types of data OpenBook can display:
 1. **Expenses** — how the town spends money, by department and function area
 2. **Revenues** — where the town's money comes from
 3. **Capital Projects** — large one-time expenditures, their purpose, and funding sources
-4. **Reserves** — stabilization funds and free cash (stored but not yet displayed publicly)
+4. **Reserves** — stabilization funds, free cash, and other balances, shown as a trend over time
 
 ---
 
@@ -86,7 +95,9 @@ Your town controls everything. OpenBook is self-hosted, meaning all data — the
 
 ## What Happens to Resident Questions?
 
-When a resident uses the "Ask a Question" feature on the public portal, they are directed to email your town's finance office directly using the contact email you provide. You set that email address in the admin settings.
+Residents' questions go straight to the email address you set in the admin settings — typically your finance office — and arrive like any other email. Nothing sits in a queue waiting to be noticed.
+
+Your finance staff can also publish answers to common questions on the portal's FAQ page, which cuts down on the same question arriving repeatedly.
 
 ---
 
@@ -108,7 +119,7 @@ Your IT contact will set this up. The portal is publicly accessible to anyone �
 - **First data upload:** 15–30 minutes
 - **Adding tooltips and documents:** 30–60 minutes, optional
 
-After that, your annual update (uploading the new budget each year) takes about 15–30 minutes.
+After that, the annual update — uploading the new budget each year — takes about twenty minutes.
 
 ---
 

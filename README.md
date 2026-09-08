@@ -2,7 +2,7 @@
 
 A municipal budget transparency platform. OpenBook lets towns publish their budgets online so residents can explore expenses, revenues, and capital projects in plain language.
 
-![Homepage](docs/screenshots/homepage.png)
+![The public portal, with the banner, headline figures, and sections for expenses, revenues, and capital](docs/screenshots/portal-overview.png)
 
 ## Who this guide is for
 
@@ -12,15 +12,15 @@ A short **glossary** at the bottom defines any term that looks unfamiliar (look 
 
 ## Town Budget Portal
 
-Each town gets a branded portal with tabbed navigation across budget categories, summary tiles, interactive charts, searchable line-item tables, exportable data, and a printable budget book.
+Each municipality gets a branded portal with tabbed navigation across budget categories, summary tiles, interactive charts, searchable line-item tables, exportable data, and a printable budget book. Residents can start with the big picture and drill down to individual line items.
 
-![Town Portal](docs/screenshots/town-portal.png)
+![The public expenses page, with summary tiles, a pie chart, a multi-year trend chart, and a searchable table](docs/screenshots/portal-expenses.png)
 
 ## Admin Dashboard
 
-Town administrators upload budget data (CSV or Excel), customize portal branding, add plain-language tooltips for budget items, manage supporting documents, and respond to resident questions.
+Administrators upload budget data (CSV or Excel), customize portal branding, add plain-language tooltips for budget items, and manage supporting documents. OpenBook matches spreadsheet columns to its own fields automatically and asks for confirmation before saving anything.
 
-![Admin](docs/screenshots/admin-upload.png)
+![The column mapping step, with each spreadsheet column matched to an OpenBook field](docs/screenshots/admin-column-mapping.png)
 
 ---
 
@@ -189,7 +189,7 @@ Go to `/admin/setup`. You'll fill in:
 
 - **Town name and slug** — the _slug_ is the short URL-friendly version of the town's name (for example, "Anytown" might become `anytown`). Your portal's address becomes `/your-town-slug`.
 - **Primary color** — the accent color used for charts and links on the public site.
-- **Logo** — an image (your town seal, for example) that appears as the browser tab icon and at the top of pages.
+- **Logo** — an image (your municipal seal, for example) shown in the top-left corner of every portal page, beside the name. PNG, JPEG, or WebP up to 10 MB; large images are resized automatically.
 - **Contact email** — where resident questions will be sent.
 - **About text** — a short description that appears on the portal homepage.
 
@@ -212,11 +212,7 @@ Each category has its own required fields:
 
 Examples of well-formatted data files are in the `sample-data/` folder inside the project — open them in Excel or a text editor if you want a template to follow.
 
-Sample Data (Capital)
-![Capital](docs/screenshots/sample-data-capital.png)
-
-Sample Data (Revenue)
-![Revenue](docs/screenshots/sample-data-revenue.png)
+The upload screen shows a sample table for whichever category you pick, so you can compare it against your own export before uploading.
 
 **Tip:** uploads work best when each row represents a single category or line amount rather than a specific year, and when extraneous cells (totals, titles, blank rows above the headers) are removed before upload.
 

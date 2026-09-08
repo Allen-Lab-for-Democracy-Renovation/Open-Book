@@ -120,9 +120,25 @@ Use your Postgres provider's backup tools for database backups. For testing data
 
 ### Updating OpenBook
 
-For Vercel deployments, push changes to the GitHub repository and Vercel redeploys automatically.
+Fixes and improvements reach your portal only when you update your copy of the code. Plan on this once or twice a year.
 
-For self-hosted deployments:
+**If you forked the repository** (the recommended setup above), the fork does not update itself. Vercel redeploys when *your fork* changes, and your fork changes only when you sync it:
+
+1. Open your fork on GitHub. A banner appears when it is behind the upstream project.
+2. Click **Sync fork** → **Update branch**.
+3. Vercel picks up the new commit and redeploys within a few minutes.
+
+From the command line:
+
+```bash
+git remote add upstream https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book.git   # first time only
+git fetch upstream
+git checkout main
+git merge upstream/main
+git push origin main
+```
+
+**For self-hosted deployments:**
 
 ```bash
 git pull
@@ -130,6 +146,8 @@ npm install
 npm run build
 npm start
 ```
+
+Updating never touches town data. Budget rows, documents, settings, and accounts live in Postgres, not in the code, and migrations run automatically during the build.
 
 ## Troubleshooting
 

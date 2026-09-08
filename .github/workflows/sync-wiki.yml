@@ -1,0 +1,62 @@
+# Publishes docs/wiki/ to this repository's GitHub wiki.
+#
+# The wiki is a separate git repository, so it used to be updated by hand and
+# drifted months behind the guides in this repo. Editing the files here is now
+# the only step: whatever is in docs/wiki/ on main is what the wiki shows.
+#
+# Edit the pages in docs/wiki/ — changes made in the wiki's own web editor are
+# overwritten the next time this runs.
+name: Sync wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/wiki/**"
+      - ".github/workflows/sync-wiki.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Two runs pushing to the same wiki would collide.
+concurrency:
+  group: sync-wiki
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Clone the wiki
+        run: |
+          git clone \
+            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git" \
+            wiki
+
+      - name: Copy the guides into the wiki
+        run: |
+          # Remove pages that came from this repo, so a guide deleted or
+          # renamed here also disappears from the wiki. Files beginning with an
+          # underscore (_Sidebar.md, _Footer.md) are wiki-only furniture with no
+          # equivalent here, so they are left alone.
+          find wiki -maxdepth 1 -name '*.md' ! -name '_*' -delete
+          cp docs/wiki/*.md wiki/
+
+      - name: Commit and push
+        working-directory: wiki
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Wiki already matches docs/wiki — nothing to publish."
+            exit 0
+          fi
+          git commit -m "Sync wiki from ${GITHUB_SHA:0:7}"
+          git push
+          echo "Published:"
+          git show --stat --oneline HEAD

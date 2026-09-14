@@ -230,6 +230,12 @@ export default function UsersPage() {
           however you prefer (email, text, in person). Without the invite
           link, nobody can register.
         </p>
+        <p className="mt-2">
+          <strong>Reset Password</strong> works the same way: clicking it
+          creates a new, single-use reset link for that person and copies it
+          to your clipboard. Nothing is emailed automatically — send them the
+          link and they&apos;ll choose a new password.
+        </p>
       </HelpBox>
 
       {error && <p className="text-sm text-red-600" role="alert">{error}</p>}

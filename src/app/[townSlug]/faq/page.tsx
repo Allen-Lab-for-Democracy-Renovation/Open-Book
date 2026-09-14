@@ -20,11 +20,6 @@ export default async function FaqPage({
     // Table may not exist if migration hasn't been applied yet
   }
 
-  const subject = encodeURIComponent(`Question about ${town.name}'s budget`);
-  const body = encodeURIComponent(
-    `Hi,\n\nI have a question about ${town.name}'s budget:\n\n[Your question here]\n\nThank you`
-  );
-
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-6">
@@ -75,26 +70,17 @@ export default async function FaqPage({
 
       {town.contactEmail && (
         <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-5">
-          <p className="text-sm text-blue-900 leading-relaxed mb-3">
-            <strong>Don&apos;t see your question?</strong> Reach out to{" "}
-            {town.name}&apos;s finance office directly.
-          </p>
-          <a
-            href={`mailto:${town.contactEmail}?subject=${subject}&body=${body}`}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="w-4 h-4"
-              aria-hidden="true"
+          <p className="text-sm text-blue-900 leading-relaxed">
+            <strong>Don&apos;t see your question?</strong> Please contact{" "}
+            {town.name}&apos;s finance office at{" "}
+            <a
+              href={`mailto:${town.contactEmail}`}
+              className="underline hover:text-blue-700"
             >
-              <path d="M3 4a2 2 0 00-2 2v1.161l8.441 4.221a1.25 1.25 0 001.118 0L19 7.162V6a2 2 0 00-2-2H3z" />
-              <path d="M19 8.839l-7.77 3.885a2.75 2.75 0 01-2.46 0L1 8.839V14a2 2 0 002 2h14a2 2 0 002-2V8.839z" />
-            </svg>
-            Email {town.contactEmail}
-          </a>
+              {town.contactEmail}
+            </a>
+            .
+          </p>
         </div>
       )}
     </div>

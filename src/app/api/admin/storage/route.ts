@@ -33,9 +33,6 @@ export async function GET() {
     uploadsDirSize = 0;
   }
 
-  const FREE_TIER_LIMIT = 100 * 1024 * 1024;
-  const totalUsed = dbSize + uploadsDirSize;
-
   return NextResponse.json({
     database: {
       sizeBytes: dbSize,
@@ -46,11 +43,6 @@ export async function GET() {
     files: {
       sizeBytes: uploadsDirSize,
       pdfSizeBytes: totalPdfSize._sum.fileSize || 0,
-    },
-    total: {
-      sizeBytes: totalUsed,
-      limitBytes: FREE_TIER_LIMIT,
-      percentUsed: Math.round((totalUsed / FREE_TIER_LIMIT) * 100),
     },
   });
 }

@@ -19,7 +19,7 @@ After that, finance staff manage everything through a browser-based admin panel.
 
 ## Requirements
 
-- **Node.js 18 or higher** (Node 20 LTS recommended) — [nodejs.org](https://nodejs.org)
+- **Node.js 20.9 or higher** (Node 20 LTS recommended) — [nodejs.org](https://nodejs.org)
 - **npm 9 or higher** (comes bundled with Node.js)
 - A server or hosting account that can run Node.js applications
 - A domain name or subdomain pointed at your server
@@ -33,7 +33,7 @@ Pick whichever of these matches your situation.
 
 ### Option A: Use Your Town's Existing Server Infrastructure
 
-If your town already has a Linux or Windows Server that you manage, and it can run Node.js 18+, you can host OpenBook there.
+If your town already has a Linux or Windows Server that you manage, and it can run Node.js 20.9+, you can host OpenBook there.
 
 - On **Linux (Ubuntu/Debian):** Install Node.js using `nvm` or the official NodeSource package. Use `pm2` to keep the app running as a background process.
 - On **Windows Server:** Install Node.js from [nodejs.org](https://nodejs.org). Use **PM2 for Windows** or **NSSM** to run it as a Windows service.
@@ -41,15 +41,19 @@ If your town already has a Linux or Windows Server that you manage, and it can r
 
 > **Note:** If your town's main website runs on a managed platform like CivicPlus or Granicus, you cannot add OpenBook as a subfolder of that site. Host it separately and use a subdomain (e.g., `budget.yourtown.gov`) pointed at your server.
 
-### Option B: Railway (Recommended for Simplicity)
+### Option B: Vercel (Simplest; Free Tier Available)
+
+[Vercel](https://vercel.com) is the platform OpenBook's framework (Next.js) is built by, and the quickest path to a live site: fork the repository to your town's GitHub account, click **Add New Project** in Vercel, import the fork, add `DATABASE_URL` under **Environment Variables**, and click **Deploy**. Vercel builds the app, applies database migrations, provides HTTPS, and redeploys whenever your fork changes. The Hobby tier is free and sufficient for a town portal; paid tiers start around $20/month. Pair it with a free Postgres database from Vercel Storage, Neon, or Supabase (Step 4).
+
+### Option C: Railway
 
 [Railway](https://railway.app) is a cloud hosting platform that runs Node.js apps with minimal configuration. It has a SOC 2 Type I certification and is appropriate for this use case. Cost is approximately $5–$20/month.
 
-### Option C: Render
+### Option D: Render
 
 [Render](https://render.com) is similar to Railway and has a SOC 2 Type II certification. Also approximately $7–$25/month.
 
-The remaining steps in this guide cover all three options, with notes for each where they differ.
+The remaining steps in this guide cover all four options, with notes for each where they differ. Vercel, Railway, and Render behave the same way for the purposes of this guide: they connect to your GitHub repository, take environment variables from their dashboard, and start the app for you.
 
 ---
 
@@ -66,9 +70,9 @@ cd Open-Book
 
 If you do not have `git` installed, you can download a ZIP from the GitHub page (click the green **Code** button → **Download ZIP**), upload it to your server, and unzip it.
 
-### If using Railway or Render:
+### If using Vercel, Railway, or Render:
 
-You will connect these services directly to the GitHub repository. You do not need to download anything yourself. Skip to Step 4.
+You will connect these services directly to the GitHub repository (fork it to your town's GitHub account first so you control updates). You do not need to download anything yourself. Skip to Step 4.
 
 ---
 
@@ -105,14 +109,16 @@ DATABASE_URL="postgresql://user:password@host:5432/openbook?sslmode=require"
 - `DATABASE_URL` is the Postgres connection string from your database provider.
 - If your provider gives you both a **pooled** and a **direct** connection string (common with Neon and Supabase), use the pooled string for `DATABASE_URL` and add the direct string as `DIRECT_URL` — this is used for running migrations.
 
-### On Railway or Render:
+### On Vercel, Railway, or Render:
 
-You will enter these as **environment variables** in the hosting platform's dashboard (no `.env` file needed). Railway and Render can both provision a Postgres add-on directly, or you can use an external provider as above. In your project settings, look for a "Variables" or "Environment" section and add:
+You will enter these as **environment variables** in the hosting platform's dashboard (no `.env` file needed). Vercel, Railway, and Render can all provision a Postgres database directly, or you can use an external provider as above. In your project settings, look for a "Variables" or "Environment" section and add:
 
 | Variable | Value |
 |---|---|
 | `DATABASE_URL` | your Postgres connection string |
 | `DIRECT_URL` | (optional) direct connection string, if your provider gives you a separate pooled/direct pair |
+| `RESEND_API_KEY` | (optional) an API key from [Resend](https://resend.com) if you want OpenBook to email the admin verification link. Without it, no email is sent and the link is written to the server log instead. Staff invites and password resets never use email — the admin copies a link and sends it however they like. |
+| `NEXT_PUBLIC_APP_URL` | (optional) the site's public URL, e.g. `https://budget.yourtown.gov`, used to build links in any emails |
 
 ---
 
@@ -126,7 +132,7 @@ Because OpenBook's data lives in your external Postgres database rather than a f
 
 OpenBook uses a tool called Prisma to create all the tables it needs inside your Postgres database. You don't need to run this manually — it's already wired into OpenBook's `build` and `dev` commands (`npm run build` and `npm run dev` both apply any pending migrations automatically before starting). You only need to make sure `DATABASE_URL` (and `DIRECT_URL`, if you have one) is set correctly in your `.env` file or hosting platform's environment variables before you start the app.
 
-### On Railway or Render:
+### On Vercel, Railway, or Render:
 
 No extra build command is needed — the default `npm install && npm run build` (or whatever your platform uses by default) already applies migrations as part of `npm run build`.
 
@@ -160,9 +166,9 @@ pm2 save
 pm2 startup
 ```
 
-### On Railway or Render:
+### On Vercel, Railway, or Render:
 
-The platform starts the app automatically after each deploy. Railway uses the `start` script from `package.json` by default. Render should be configured with:
+The platform starts the app automatically after each deploy. Vercel and Railway need no configuration. Render should be configured with:
 - **Build Command:** `npm install && npm run build` (migrations apply automatically as part of `npm run build`)
 - **Start Command:** `npm start`
 
@@ -180,18 +186,20 @@ You want residents to reach the portal at a real web address, not a raw IP or a 
 2. Add a new **CNAME record**:
    - **Name/Host:** `budget` (or whatever subdomain you want)
    - **Points to / Value:** the address provided by your hosting platform
+     - Vercel tells you the exact record to create under **Settings → Domains** (usually a CNAME to `cname.vercel-dns.com`)
      - Railway gives you a URL like `openbook-production.up.railway.app`
      - Render gives you a URL like `openbook.onrender.com`
      - For your own server: create an **A record** pointing to your server's IP address
 3. Save the record. DNS changes can take 10–60 minutes to propagate.
 
-### On Railway or Render:
+### On Vercel, Railway, or Render:
 
 After setting up DNS, add your custom domain in the platform:
+- **Vercel:** Settings → Domains → Add
 - **Railway:** Settings → Domains → Custom Domain → enter your subdomain
 - **Render:** Settings → Custom Domains → Add Custom Domain
 
-Both platforms will provide an SSL certificate automatically (HTTPS). No additional configuration needed.
+All three platforms provide an SSL certificate automatically (HTTPS). No additional configuration needed.
 
 ### On your own server:
 
@@ -232,7 +240,7 @@ Fill in:
 - An email address for the account
 - A password (at least 8 characters)
 
-Click **Create Account**. You'll be signed in immediately and shown a confirmation screen with a link to continue to town setup. OpenBook also sends a verification email to the address you registered with — click the link in that email to verify it.
+Click **Create Account**. You'll be signed in immediately and shown a confirmation screen with a link to continue to town setup. If you configured `RESEND_API_KEY`, OpenBook also sends a verification email to the address you registered with; otherwise no email is sent, and nothing about the account depends on it.
 
 > **The first person to register automatically becomes the administrator.** After that, this page is locked — nobody else can register a new admin account unless an existing admin is signed in and creates one for them. This is intentional: it's what prevents a stranger from quietly creating their own admin account on your live portal.
 
@@ -311,3 +319,6 @@ Check that `DATABASE_URL` points at a healthy, reachable Postgres database. A mi
 
 **Need to transfer admin access to a new person:**
 The finance staff can do this themselves from the admin panel under the **Transfer** tab — no IT involvement needed.
+
+**Something else is wrong:**
+Open an issue at [github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/issues](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/issues/new) with what you did, what happened, and the relevant log lines, or email Sarah Hubbard at [sarah_hubbard@hks.harvard.edu](mailto:sarah_hubbard@hks.harvard.edu).

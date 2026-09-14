@@ -278,11 +278,12 @@ export default async function RevenuesPage({
     const lineKey = `${row.category1 || "Other"}|${
       row.category2 || "Other"
     }|${row.lineItem || ""}`;
-    const amountColumns: Record<string, string> = {};
+    // Plain numbers, not "$1,234" strings, so the CSV opens as numeric
+    // cells in any spreadsheet program.
+    const amountColumns: Record<string, number> = {};
     for (const column of financialColumns) {
-      amountColumns[column.label] = formatCurrency(
-        lineTotalsByColumn.get(column.key)?.get(lineKey) || 0
-      );
+      amountColumns[column.label] =
+        lineTotalsByColumn.get(column.key)?.get(lineKey) || 0;
     }
     return {
       Category: row.category1 || "",

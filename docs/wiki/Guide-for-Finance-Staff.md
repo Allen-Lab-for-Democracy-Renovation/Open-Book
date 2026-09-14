@@ -54,7 +54,7 @@ There are five things to fill in:
 
 **Town Logo** — click **Choose File** and pick your seal or logo. PNG, JPEG, or WebP, up to 10 MB. Large images are shrunk for you, so do not worry about the size of the original. The logo appears in the top-left corner of every page, next to your town name.
 
-**Contact Email** — where residents should send budget questions. This is shown publicly, so use a department address like `finance@yourtown.gov`, not a personal one.
+**Contact Email** — where residents should send budget questions. It appears on the portal's FAQ and Documents pages as "Please contact …", so use a department address like `finance@yourtown.gov`, not a personal one.
 
 **About This Portal** — one or two sentences telling residents what this site is. For example: *"Riverton's budget portal lets residents explore how the town raises and spends money each fiscal year."*
 
@@ -106,7 +106,9 @@ If something required is still missing, a yellow box tells you what before you c
 
 When the warnings are gone, click **Confirm & Save Data**.
 
-> **Tip:** Upload one file at a time. Do expenses first, then come back for revenues, and so on. Each kind of data stands on its own.
+> **Your portal goes live at this moment.** Saving the first upload is what makes the public portal visible to residents — there is no separate "publish" button. If you want to get everything right before anyone can see it, do the setup on a test database first (see the Local Testing Guide), or simply don't share the address until you're happy with it.
+
+> **Tip:** Upload one file at a time. Do expenses first, then come back for revenues, and so on. Each kind of data stands on its own. If you upload a file covering a fiscal year that already has data in that category, OpenBook warns you and asks before replacing the old rows.
 
 ---
 
@@ -218,9 +220,12 @@ Skip this section unless your town uses the staff portal.
 
 Department heads can sign in separately and submit capital requests. They appear in the **Requests** tab with the department, purpose, amount, who submitted it, and the date.
 
-Click any row to open it and read the full description, justification, and proposed funding source. Then optionally type **Admin Notes** (the staff member sees these) and choose **Approve**, **Deny**, or **Under Review**. They see the change the next time they sign in.
+Click any row to open it and read the full description, justification, and proposed funding source. Then optionally type **Admin Notes** (the staff member sees these) and choose **Approve**, **Recommend**, **Deny**, or **Under Review**. **Recommend** is for requests you are putting forward to the Select Board or Town Meeting without a final decision yet. They see the change and your notes the next time they sign in.
 
-To invite department staff, use the **Users** tab: enter their email, click **Create Invite**, and send them the link that gets copied to your clipboard. Each link works once.
+To invite department staff, use the **Users** tab: enter their email, click **Create Invite**, and send them the link that gets copied to your clipboard. Each link works once. The same tab has two more buttons for each staff member:
+
+- **Reset Password** creates a single-use reset link and copies it to your clipboard — send it to them the same way as an invite. Nothing is emailed automatically.
+- **Remove** deletes their account. Any requests they submitted stay on record, marked "Removed user".
 
 ---
 
@@ -251,7 +256,13 @@ Once a year, when the new budget is adopted:
 
 - **Upload several years if you have them.** Trend charts and change columns appear on their own once there is more than one year of data.
 - **Check it on your phone.** Many residents will. Open Preview on your phone and scroll through.
-- **Nothing is public until you publish.** Take your time getting it right.
+- **The portal is public from your first upload.** If you'd like a dry run first, use a separate test database, or just keep the address to yourself until it looks right.
 - **The Budget Book tab prints.** It assembles your data into a formatted document you can print or save as a PDF for meetings, and it can include the prior year with the change from year to year.
 
 ![The Budget Book view, a printable summary of the budget](https://raw.githubusercontent.com/Allen-Lab-for-Democracy-Renovation/Open-Book/main/docs/screenshots/portal-budget-book.png)
+
+---
+
+## If Something Isn't Working
+
+Tell us. Open an issue at [github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/issues](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/issues/new) describing what you were doing, what happened, and the page you were on (a screenshot helps — crop out anything private), or email Sarah Hubbard at [sarah_hubbard@hks.harvard.edu](mailto:sarah_hubbard@hks.harvard.edu).

@@ -34,7 +34,7 @@ Every page is built for someone who has never read a municipal budget. Spending 
 The only potential cost is **web hosting** — the server that keeps the portal running on the internet. Depending on how your town handles this:
 
 - **If your IT department hosts it on existing town infrastructure:** Likely no additional cost.
-- **If you use a cloud hosting service like Railway or Render:** Approximately $5–$20 per month, well within the Chapter 30B threshold that triggers formal procurement.
+- **If you use a cloud hosting service:** Vercel's free tier, paired with a free Postgres database from Neon, Supabase, or Vercel Storage, is enough for a town portal at no cost. Alternatives like Railway or Render run approximately $5–$20 per month — either way, well within the Chapter 30B threshold that triggers formal procurement.
 - **If you use a `.gov` domain:** Free through the federal [get.gov](https://get.gov) program, which is available to municipal governments.
 
 ---
@@ -127,4 +127,4 @@ After that, the annual update — uploading the new budget each year — takes a
 
 Share this wiki with your IT contact and your finance office staff. Ask your IT contact to read the **IT Department Guide** and begin setup. Once they hand you a login, your finance office staff can follow the **Finance Staff Guide** to set up the portal and upload data.
 
-If you have questions about the software itself, the project is maintained at [github.com/Allen-Lab-for-Democracy-Renovation/Open-Book](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book).
+If you have questions about the software itself, the project is maintained at [github.com/Allen-Lab-for-Democracy-Renovation/Open-Book](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book). Problems can be reported on the [GitHub Issues page](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/issues/new), and anyone interested in contributing — or who just wants to talk about using OpenBook in their town — can reach Sarah Hubbard at [sarah_hubbard@hks.harvard.edu](mailto:sarah_hubbard@hks.harvard.edu).

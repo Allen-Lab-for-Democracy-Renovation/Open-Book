@@ -23,7 +23,7 @@ interface CapitalRequest {
   adminNotes: string | null;
   createdAt: string;
   updatedAt: string;
-  staffUser: StaffUser;
+  staffUser: StaffUser | null;
 }
 
 interface Town {
@@ -238,7 +238,7 @@ export default function AdminRequestsPage() {
                     {formatCurrency(req.amount)}
                   </div>
                   <div className="col-span-2 text-sm text-gray-600 truncate">
-                    {req.staffUser.name}
+                    {req.staffUser?.name ?? "Removed user"}
                   </div>
                   <div className="col-span-1 text-xs text-gray-500">
                     {formatDate(req.createdAt)}
@@ -259,9 +259,12 @@ export default function AdminRequestsPage() {
                     <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                       <div>
                         <p className="text-gray-500 text-xs">Staff Member</p>
-                        <p className="font-medium">{req.staffUser.name}</p>
+                        <p className="font-medium">
+                          {req.staffUser?.name ?? "Removed user"}
+                        </p>
                         <p className="text-xs text-gray-500">
-                          {req.staffUser.email}
+                          {req.staffUser?.email ??
+                            "This staff account has been removed"}
                         </p>
                       </div>
                       <div>

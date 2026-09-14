@@ -4,7 +4,7 @@ OpenBook is a municipal budget transparency portal. Each town deploys its own in
 
 ## Prerequisites
 
-- Node.js 20 LTS or later
+- Node.js 20.9 or later (20 LTS recommended)
 - npm 9+
 - A Postgres database connection string
 
@@ -16,10 +16,10 @@ For testing, a free Postgres database from Vercel Storage, Neon, or Supabase is 
 git clone https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book.git
 cd Open-Book
 npm install
-cp .env.example .env.local
+cp .env.example .env
 ```
 
-Edit `.env.local` and set `DATABASE_URL` to your Postgres connection string. If your provider gives you both pooled and direct URLs, set `DATABASE_URL` to the pooled runtime URL and `DIRECT_URL` to the direct URL.
+Edit `.env` and set `DATABASE_URL` to your Postgres connection string. If your provider gives you both pooled and direct URLs, set `DATABASE_URL` to the pooled runtime URL and `DIRECT_URL` to the direct URL.
 
 ```bash
 npm run dev
@@ -62,7 +62,9 @@ To load sample data for testing:
 npm run seed
 ```
 
-This loads the sample CSV files from `sample-data/` into the configured Postgres database.
+This loads the sample CSV files from `sample-data/` into the configured Postgres database as a sample town called "Sutton" (visible at `/sutton`).
+
+**Warning:** seeding first deletes every town, upload, and budget row in that database. Never run it against a live portal.
 
 ## Troubleshooting
 

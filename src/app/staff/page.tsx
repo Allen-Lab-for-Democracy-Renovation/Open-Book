@@ -19,7 +19,10 @@ export default async function StaffDashboardPage() {
 
   const totalRequests = allRequests.length;
   const pendingRequests = allRequests.filter(
-    (r) => r.status === "submitted" || r.status === "under_review"
+    (r) =>
+      r.status === "submitted" ||
+      r.status === "under_review" ||
+      r.status === "recommended"
   ).length;
   const approvedRequests = allRequests.filter(
     (r) => r.status === "approved"
@@ -35,6 +38,7 @@ export default async function StaffDashboardPage() {
     const styles: Record<string, string> = {
       submitted: "bg-blue-100 text-blue-800",
       under_review: "bg-yellow-100 text-yellow-800",
+      recommended: "bg-purple-100 text-purple-800",
       approved: "bg-green-100 text-green-800",
       denied: "bg-red-100 text-red-800",
     };
@@ -45,6 +49,7 @@ export default async function StaffDashboardPage() {
     const labels: Record<string, string> = {
       submitted: "Submitted",
       under_review: "Under Review",
+      recommended: "Recommended",
       approved: "Approved",
       denied: "Denied",
     };

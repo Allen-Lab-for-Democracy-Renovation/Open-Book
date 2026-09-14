@@ -52,7 +52,7 @@ export default function DocsPage() {
                 <li>
                   <strong>Set environment variables</strong>
                   <pre className="mt-1 bg-gray-50 rounded-lg p-3 text-sm overflow-x-auto">
-                    <code>cp .env.example .env.local{"\n"}# Edit .env.local with your Postgres DATABASE_URL</code>
+                    <code>cp .env.example .env{"\n"}# Edit .env with your Postgres DATABASE_URL</code>
                   </pre>
                   <p className="mt-1 text-sm text-gray-500">
                     A local Postgres database works, or you can use a free hosted

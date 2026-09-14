@@ -146,11 +146,11 @@ export default async function ReservesPage({
   ];
 
   const exportData = series.funds.map((fund) => {
-    const balances: Record<string, string> = {};
+    // Plain numbers, not "$1,234" strings, so the CSV opens as numeric
+    // cells in any spreadsheet program.
+    const balances: Record<string, number> = {};
     for (const column of reserveColumns) {
-      balances[column.label] = formatCurrency(
-        fund.balances[column.fiscalYear] || 0
-      );
+      balances[column.label] = fund.balances[column.fiscalYear] || 0;
     }
     return {
       "Fund Name": fund.name,

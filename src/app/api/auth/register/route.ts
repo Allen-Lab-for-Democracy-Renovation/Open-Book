@@ -2,7 +2,19 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/db";
 import { hashPassword, createSession, setSessionCookie, getCurrentUser } from "@/lib/auth";
-import { sendVerificationEmail } from "@/lib/email";
+import { sendVerificationEmail, emailEnabled } from "@/lib/email";
+
+// Lets the register page find out, before showing a form, whether a new
+// admin can be created right now: always for the very first account, and
+// otherwise only while an existing admin is signed in.
+export async function GET() {
+  const adminCount = await prisma.adminUser.count();
+  if (adminCount === 0) {
+    return NextResponse.json({ open: true, firstAdmin: true });
+  }
+  const currentUser = await getCurrentUser();
+  return NextResponse.json({ open: Boolean(currentUser), firstAdmin: false });
+}
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -58,6 +70,7 @@ export async function POST(request: Request) {
       id: user.id,
       email: user.email,
       name: user.name,
+      emailSent: emailEnabled,
     },
     { status: 201 }
   );

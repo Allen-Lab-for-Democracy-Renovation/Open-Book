@@ -32,7 +32,7 @@ This part is a complete walk-through from a fresh computer to a running OpenBook
 
 You need a few things before OpenBook can run. They are free, official, and safe to install.
 
-### 1. Node.js (version 18 or newer; 20 LTS recommended)
+### 1. Node.js (version 20.9 or newer; 20 LTS recommended)
 
 **What it is.** Node.js is the program that runs OpenBook on your computer. OpenBook is written in a language called JavaScript/TypeScript, and Node.js is what reads and executes it. Installing Node.js also installs **`npm`** ("node package manager"), which downloads the small building-block libraries OpenBook depends on so you don't have to.
 
@@ -73,7 +73,7 @@ If you want to install Git: go to <https://git-scm.com/downloads> and run the in
 
 **What it is.** Postgres is the database OpenBook uses to store town settings, uploaded budget rows, staff invites, and admin accounts. You can run Postgres on your own computer, but for testing it is usually easiest to create a free hosted database through Vercel Storage, Neon, or Supabase.
 
-After creating the database, copy its connection string. It usually starts with `postgresql://`. You will paste it into `.env.local` in the steps below.
+After creating the database, copy its connection string. It usually starts with `postgresql://`. You will paste it into `.env` in the steps below.
 
 ## Quick start
 
@@ -81,8 +81,8 @@ If you already have Node.js installed and you have the project files on your com
 
 ```bash
 npm install
-cp .env.example .env.local
-# Edit .env.local with your Postgres DATABASE_URL
+cp .env.example .env
+# Edit .env with your Postgres DATABASE_URL
 npm run dev
 ```
 
@@ -129,13 +129,13 @@ You will see a lot of output scroll by — that's normal. As long as the final l
 
 ### Step 3: Configure the database
 
-OpenBook reads its database settings from a local file named `.env.local`. Create that file by copying the example:
+OpenBook reads its database settings from a local file named `.env`. Create that file by copying the example:
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
-Open `.env.local` in a text editor and replace the sample `DATABASE_URL` value with your Postgres connection string.
+Open `.env` in a text editor and replace the sample `DATABASE_URL` value with your Postgres connection string. (A `.env.local` file works too, if you prefer the Next.js convention.)
 
 If your database provider gives you both a pooled connection string and a direct connection string, use the pooled string for `DATABASE_URL` and the direct string for `DIRECT_URL`.
 
@@ -149,7 +149,7 @@ npm run dev
 
 What this does:
 
-1. Connects to the Postgres database from `.env.local`.
+1. Connects to the Postgres database from `.env`.
 2. Applies all of OpenBook's data-structure setup ("migrations") to that database.
 3. Starts the web server.
 
@@ -165,7 +165,9 @@ OpenBook starts empty, so the public portal won't have anything to show until yo
 npm run seed
 ```
 
-Run this in a **second** new terminal window (so the first one can keep running OpenBook). Refresh your browser and you'll see a sample town with budget data already in it.
+Run this in a **second** new terminal window (so the first one can keep running OpenBook). It creates a sample town called "Sutton" from the files in `sample-data/`; refresh your browser and open <http://localhost:3000/sutton> to see it.
+
+> **Warning:** `npm run seed` first **deletes every town, upload, and budget row** in the connected database. Only run it against a database you are happy to wipe — never against a live portal.
 
 ---
 
@@ -187,10 +189,10 @@ Next time, sign in at <http://localhost:3000/admin/login>.
 
 Go to `/admin/setup`. You'll fill in:
 
-- **Town name and slug** — the _slug_ is the short URL-friendly version of the town's name (for example, "Anytown" might become `anytown`). Your portal's address becomes `/your-town-slug`.
+- **Town name** — how your municipality appears on the portal. The first time you save, OpenBook also derives a _slug_ from it — a short URL-friendly version (for example, "Anytown" becomes `anytown`) — and your portal's address becomes `/anytown`. The slug is fixed after that, so renaming the town later doesn't break existing links.
 - **Primary color** — the accent color used for charts and links on the public site.
 - **Logo** — an image (your municipal seal, for example) shown in the top-left corner of every portal page, beside the name. PNG, JPEG, or WebP up to 10 MB; large images are resized automatically.
-- **Contact email** — where resident questions will be sent.
+- **Contact email** — shown on the public portal so residents can email the finance office with questions.
 - **About text** — a short description that appears on the portal homepage.
 
 ## 3. Upload budget data (Upload tab)
@@ -234,6 +236,8 @@ Town staff (department heads, etc.) can't self-register — accounts are created
 - **Invite a staff member** — enter their email address and click **Create Invite**. A unique, single-use invite link is generated and automatically copied to your clipboard. Send it to them however you prefer (email, text, in person) — without the link, nobody can register.
 - **Pending invites** — lists invites that have been created but not yet accepted.
 - **Allowed email domains** — optionally restrict invites to specific email domains (e.g., only `@yourtown.gov` addresses). Leave this unset to allow any email.
+- **Reset Password** — works the same way as invites: clicking it generates a single-use reset link and copies it to your clipboard for you to send to that person. Nothing is emailed automatically.
+- **Remove** — deletes the staff account. Any capital requests they submitted stay on record, marked "Removed user".
 
 Once a staff member clicks their invite link at `/staff/join?token=...`, they set their own name, password, and department, and are signed in immediately. From there they can submit and track capital expenditure requests, which you review under the **Requests** tab.
 
@@ -242,11 +246,10 @@ Once a staff member clicks their invite link at `/staff/join?token=...`, they se
 Once data is uploaded, several optional features make the portal more useful for residents:
 
 - **Tooltips** (`/admin/tooltips`) — short, plain-language explanations that show up when residents hover or tap a `?` icon next to a budget category or line item. Keep them short and non-essential — they should clarify, not be required reading.
-- **Links** (`/admin/links`) — supporting external links (e.g., town meeting warrants, audit reports) shown on the portal.
-- **PDFs** (`/admin/documents`) — uploadable PDF documents (annual reports, fee schedules, etc.).
-- **FAQs** (`/admin/faqs`) — frequently asked questions that appear on the portal's FAQ tab.
-- **Requests** (`/admin/requests`) — review and approve capital expenditure requests submitted by town staff via `/staff`.
-- **Transfer** (`/admin/transfer`) — export/import town data to move it between environments (for example, from your laptop to a shared server).
+- **Documents** (`/admin/documents`) — both external links (e.g., town meeting warrants, audit reports already on your website) and uploaded PDFs (annual reports, fee schedules, up to 10 MB each), grouped by category on the portal's Documents page.
+- **FAQs** (`/admin/faqs`) — frequently asked questions that appear on the portal's FAQ tab, with a "Please contact …" line pointing residents to your contact email.
+- **Requests** (`/admin/requests`) — review capital expenditure requests submitted by town staff via `/staff`. Each request can be marked Under Review, Recommended, Approved, or Denied, with notes the staff member can see.
+- **Transfer** (`/admin/transfer`) — hand your admin account to a new person when you leave the role. It creates their account and deletes yours; all portal data is kept.
 
 ## 7. Preview the public site
 
@@ -276,15 +279,15 @@ The admin header has a **Preview** link that opens your public portal (`/[townSl
 - Portal branding (name, colors, logo, contact info, about text)
 - Tooltip authoring for categories and line items
 - Document and link management
-- Resident question inbox with reply functionality
-- Staff capital request review and approval
+- FAQ authoring and a public contact email for resident questions
+- Staff capital request review (under review / recommended / approved / denied, with notes)
 - One-click public-site preview from the admin header
 
 ### For town staff
 
 - Account creation via admin-issued invite links
 - Capital expenditure request submission
-- Request tracking and status updates
+- Request tracking, including status changes and notes from the finance office
 
 ## IT Onboarding
 
@@ -309,8 +312,8 @@ Any server with Node.js 20+ works:
 git clone https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book.git
 cd Open-Book
 npm install
-cp .env.example .env.local
-# Edit .env.local with your Postgres DATABASE_URL
+cp .env.example .env
+# Edit .env with your Postgres DATABASE_URL
 npm run build
 npm start
 ```
@@ -340,10 +343,12 @@ You do not need any of this section to use OpenBook. It's here for anyone who wa
 
 ## Environment Variables
 
-| Variable       | Required | Description                                                                 |
-| -------------- | -------- | --------------------------------------------------------------------------- |
-| `DATABASE_URL` | Yes      | Postgres connection string used by the running app                          |
-| `DIRECT_URL`   | No       | Direct Postgres connection string for migrations when using pooled databases |
+| Variable              | Required | Description                                                                                                                                       |
+| --------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`        | Yes      | Postgres connection string used by the running app                                                                                                |
+| `DIRECT_URL`          | No       | Direct Postgres connection string for migrations when using pooled databases                                                                       |
+| `RESEND_API_KEY`      | No       | API key from [Resend](https://resend.com) to send the admin verification email. Without it, nothing is emailed and the link is logged to the server console instead. Invites and password resets never use email — they are links the admin copies. |
+| `NEXT_PUBLIC_APP_URL` | No       | Public URL of the site (e.g. `https://budget.yourtown.gov`), used to build links in any emails. Defaults to `http://localhost:3000`.               |
 
 ## Project Structure
 
@@ -383,9 +388,39 @@ prisma/
 
 **Upload preview shows the wrong number of columns** — the parser uses the first row of the file as the column headers. Files with title rows, blank rows, or merged cells above the real headers won't parse correctly. Open the file in Excel and delete those rows before uploading.
 
-**Port 3000 is already in use** — something else on your computer is using that address. Either close the other program or start OpenBook on a different port with `PORT=3001 npm run dev` (then open <http://localhost:3001> instead).
+**Port 3000 is already in use** — something else on your computer is using that address. Either close the other program or start OpenBook on a different port with `npm run dev -- --port 3001` (then open <http://localhost:3001> instead).
 
 **The terminal closed and OpenBook stopped** — that's expected; the server only runs while the `npm run dev` terminal window is open. To restart, open a terminal, `cd` into the project folder, and run `npm run dev` again.
+
+---
+
+# Reporting problems and contributing
+
+OpenBook is open source and maintained by the [Allen Lab for Democracy Renovation](https://github.com/Allen-Lab-for-Democracy-Renovation). We want to hear from every town that uses it.
+
+## Found a bug or have a suggestion?
+
+Open an issue on GitHub: <https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/issues/new>. You need a free GitHub account; no technical knowledge is required. A helpful issue includes:
+
+1. **What you were trying to do** (for example, "upload our FY2027 expenses file").
+2. **What happened instead**, including the exact wording of any error message.
+3. **Where it happened** — the page's web address, and whether you were on the public portal, the admin panel, or the staff portal.
+4. **A screenshot**, if you can take one. Please blur or crop anything you wouldn't want public — issues are visible to everyone.
+5. **How you're hosting OpenBook** (Vercel, Railway, Render, your own server, or running it locally).
+
+If you'd rather not use GitHub, or the problem involves something sensitive like login details, email Sarah Hubbard at <sarah_hubbard@hks.harvard.edu>.
+
+## Want to contribute?
+
+Contributions of every kind are welcome — bug fixes, new features, better documentation, sample data from your town's accounting system, or simply telling us what was confusing. To get involved, reach out to Sarah Hubbard directly at <sarah_hubbard@hks.harvard.edu>; we'll help you find a good place to start.
+
+If you're comfortable with Git, the usual flow works:
+
+1. Fork the repository and create a branch for your change.
+2. Run it locally (see [Part 1](#part-1--getting-openbook-running-on-your-computer)) and check `npm run lint` and `npm test` pass.
+3. Open a pull request describing what you changed and why. Screenshots help for anything visual.
+
+The documentation lives in this README and in the `docs/wiki/` folder (which is published automatically to the [GitHub wiki](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/wiki)), so documentation fixes are pull requests too.
 
 ---
 

@@ -226,8 +226,10 @@ model CapitalRequest {
   id            String    @id @default(cuid())
   townId        String
   town          Town      @relation(fields: [townId], references: [id], onDelete: Cascade)
-  staffUserId   String
-  staffUser     StaffUser @relation(fields: [staffUserId], references: [id])
+  // Optional so a request outlives the account that submitted it: removing a
+  // staff member keeps their requests on record with the submitter cleared.
+  staffUserId   String?
+  staffUser     StaffUser? @relation(fields: [staffUserId], references: [id], onDelete: SetNull)
   department    String
   purpose       String
   description   String?

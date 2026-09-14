@@ -8,7 +8,13 @@ interface TooltipIconProps {
 }
 
 export default function TooltipIcon({ text, label }: TooltipIconProps) {
+  // `open` tracks hover/focus; `pinned` tracks an explicit click or tap. They
+  // are kept separate because touch browsers fire a synthetic mouseenter right
+  // before click — a single toggle would open on the mouseenter and then close
+  // again on the click, so the tooltip never appeared on phones.
   const [open, setOpen] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const visible = open || pinned;
   const tooltipRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -43,28 +49,30 @@ export default function TooltipIcon({ text, label }: TooltipIconProps) {
         !buttonRef.current.contains(e.target as Node)
       ) {
         setOpen(false);
+        setPinned(false);
       }
     }
 
-    if (open) {
+    if (visible) {
       document.addEventListener("mousedown", handleClickOutside);
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
+  }, [visible]);
 
   // Esc dismisses without moving focus off the trigger (WCAG 1.4.13).
   useEffect(() => {
-    if (!open) return;
+    if (!visible) return;
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.stopPropagation();
         setOpen(false);
+        setPinned(false);
         buttonRef.current?.focus();
       }
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, [visible]);
 
   // Clear any pending close on unmount.
   useEffect(() => () => cancelClose(), []);
@@ -76,13 +84,17 @@ export default function TooltipIcon({ text, label }: TooltipIconProps) {
         type="button"
         onClick={() => {
           cancelClose();
-          setOpen((o) => !o);
+          setPinned((p) => {
+            if (p) setOpen(false);
+            return !p;
+          });
         }}
         onMouseEnter={openNow}
         onMouseLeave={scheduleClose}
         onFocus={openNow}
         onBlur={scheduleClose}
-        aria-describedby={open ? tooltipId : undefined}
+        aria-describedby={visible ? tooltipId : undefined}
+        aria-expanded={visible}
         aria-label={label ? `More info about ${label}` : "More info"}
         // The visual circle stays 16px to match the existing design, but the
         // `before:` pseudo-element extends the clickable/tappable area to a
@@ -92,7 +104,7 @@ export default function TooltipIcon({ text, label }: TooltipIconProps) {
       >
         ?
       </button>
-      {open && (
+      {visible && (
         <div
           ref={tooltipRef}
           id={tooltipId}

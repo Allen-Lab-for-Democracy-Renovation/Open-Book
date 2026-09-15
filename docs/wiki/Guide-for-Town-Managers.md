@@ -71,6 +71,8 @@ This does not require any technical knowledge. It is a web form, similar to upda
 
 If you choose to use OpenBook's capital request feature, department heads can log in through a separate staff portal and submit capital expenditure requests directly. The finance office reviews and approves or denies them from the admin panel.
 
+This part of OpenBook is internal. Capital requests, their amounts, and their status are visible only to your finance office and to the staff member who submitted them — never to the public. (The public portal's Capital page shows the adopted capital *budget* your finance office uploads, which is a separate thing.)
+
 This is optional — you can use OpenBook purely as a public-facing portal without the capital request feature.
 
 ---

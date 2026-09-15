@@ -8,7 +8,7 @@ This guide is for town department heads and staff members who use the OpenBook s
 
 The staff portal is a separate, password-protected section of OpenBook where department staff can submit requests for capital expenditures — things like equipment purchases, vehicle replacements, facility repairs, or infrastructure projects. Your finance office reviews these requests and approves or denies them.
 
-The staff portal is different from the public-facing budget portal (which any resident can visit) and different from the admin panel (which the finance office uses). You only have access to your own submissions.
+The staff portal is different from the public-facing budget portal (which any resident can visit) and different from the admin panel (which the finance office uses). You only have access to your own submissions, and nothing you submit is shown to the public: your requests, the amounts, and the finance office's notes and decisions are visible only to you and the finance office.
 
 ---
 

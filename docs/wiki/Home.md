@@ -25,14 +25,14 @@ Step-by-step instructions for deploying OpenBook to a server or cloud hosting pl
 ### I am finance or admin staff managing the portal day-to-day
 → [Guide for Finance Staff](Guide-for-Finance-Staff)
 
-How to use the admin panel: uploading budget data, adding tooltips and explanations, managing documents and links, and reviewing resident questions and capital requests.
+How to use the admin panel: uploading budget data, adding tooltips and explanations, managing documents and links, publishing FAQs, and reviewing capital requests from town staff.
 
 ---
 
 ### I am a department head or town employee submitting capital requests
 → [Guide for Department Staff](Guide-for-Department-Staff)
 
-How to register for the staff portal, submit capital expenditure requests, and track their status.
+How to register for the staff portal, submit capital expenditure requests, and track their status. (The staff portal is internal — requests are seen only by the finance office, never by the public.)
 
 ---
 

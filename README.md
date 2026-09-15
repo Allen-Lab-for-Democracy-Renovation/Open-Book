@@ -247,7 +247,9 @@ Different categories live independently — uploading a Revenues file does not a
 
 ## 5. Invite town staff (Users tab)
 
-Town staff (department heads, etc.) can't self-register — accounts are created by invite only. Go to `/admin/users`:
+This step and the **Requests** tab are OpenBook's one internal, staff-facing feature. Town staff (department heads, etc.) get their own password-protected portal at `/staff` where they submit capital expenditure requests for the finance office to review. **None of this is visible to the public** — residents never see staff accounts, the requests, or their status. It's optional; you can run OpenBook purely as a public budget portal and skip this section entirely.
+
+Staff can't self-register — accounts are created by invite only. Go to `/admin/users`:
 
 - **Invite a staff member** — enter their email address and click **Create Invite**. A unique, single-use invite link is generated and automatically copied to your clipboard. Send it to them however you prefer (email, text, in person) — without the link, nobody can register.
 - **Pending invites** — lists invites that have been created but not yet accepted.
@@ -257,14 +259,19 @@ Town staff (department heads, etc.) can't self-register — accounts are created
 
 Once a staff member clicks their invite link at `/staff/join?token=...`, they set their own name, password, and department, and are signed in immediately. From there they can submit and track capital expenditure requests, which you review under the **Requests** tab.
 
-## 6. Polish the portal
+## 6. The remaining admin tabs
 
-Once data is uploaded, several optional features make the portal more useful for residents:
+The rest of the admin tabs fall into two groups. It's worth knowing which is which, because the first group is what residents see and the second is never shown publicly.
+
+**Public-facing — these make the portal more useful for residents:**
 
 - **Tooltips** (`/admin/tooltips`) — short, plain-language explanations that show up when residents hover or tap a `?` icon next to a budget category or line item. Keep them short and non-essential — they should clarify, not be required reading.
 - **Documents** (`/admin/documents`) — both external links (e.g., town meeting warrants, audit reports already on your website) and uploaded PDFs (annual reports, fee schedules, up to 10 MB each), grouped by category on the portal's Documents page.
 - **FAQs** (`/admin/faqs`) — frequently asked questions that appear on the portal's FAQ tab, with a "Please contact …" line pointing residents to your contact email.
-- **Requests** (`/admin/requests`) — review capital expenditure requests submitted by town staff via `/staff`. Each request can be marked Under Review, Recommended, Approved, or Denied, with notes the staff member can see.
+
+**Internal — only you and your town staff can see these:**
+
+- **Requests** (`/admin/requests`) — review capital expenditure requests submitted by town staff via `/staff` (see section 5). Each request can be marked Under Review, Recommended, Approved, or Denied, with notes the submitting staff member can see. Requests are visible only to admins and to the staff member who submitted them; they never appear on the public portal. (Don't confuse them with the portal's public **Capital** tab, which shows the capital *projects* you uploaded as budget data in section 3.)
 - **Transfer** (`/admin/transfer`) — hand your admin account to a new person when you leave the role. It creates their account and deletes yours; all portal data is kept.
 
 ## 7. Preview the public site
@@ -296,13 +303,15 @@ The admin header has a **Preview** link that opens your public portal (`/[townSl
 - Tooltip authoring for categories and line items
 - Document and link management
 - FAQ authoring and a public contact email for resident questions
-- Staff capital request review (under review / recommended / approved / denied, with notes)
+- Staff capital request review (under review / recommended / approved / denied, with notes) — internal only, never shown to residents
 - One-click public-site preview from the admin header
 
 ### For town staff
 
+The staff portal is internal: nothing in it is visible to the public.
+
 - Account creation via admin-issued invite links
-- Capital expenditure request submission
+- Capital expenditure request submission (seen only by the finance office)
 - Request tracking, including status changes and notes from the finance office
 
 ## IT Onboarding

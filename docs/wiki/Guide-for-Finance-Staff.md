@@ -31,10 +31,12 @@ After signing in, a row of tabs runs across the top of every page:
 | **Tooltips** | Plain-language explanations residents see on the portal |
 | **Documents** | Links and PDFs residents can open |
 | **FAQs** | Questions and answers shown on the portal |
-| **Users** | Inviting department staff who submit capital requests |
-| **Requests** | Reviewing capital requests those staff submit |
-| **Transfer** | Handing your admin account to someone else |
+| **Users** | Inviting department staff who submit capital requests *(internal)* |
+| **Requests** | Reviewing capital requests those staff submit *(internal)* |
+| **Transfer** | Handing your admin account to someone else *(internal)* |
 | **Preview** | Opens your public portal in a new tab |
+
+The tabs marked *internal* are never shown to residents: staff accounts, capital requests, and their status are visible only to you and to the staff member who submitted them. Everything else on this list ends up on the public portal.
 
 The first time through, work along the tabs in the order below. After that you will mostly use **Upload** once a year.
 
@@ -219,6 +221,8 @@ The **FAQs** tab is where you publish questions and answers on the portal itself
 Skip this section unless your town uses the staff portal.
 
 Department heads can sign in separately and submit capital requests. They appear in the **Requests** tab with the department, purpose, amount, who submitted it, and the date.
+
+**These requests are internal.** Residents never see them — not the requests, the amounts, the notes, or the status. Only you (the admin) and the staff member who submitted a request can see it. This is separate from the public **Capital** tab on the portal, which shows the capital *projects* you uploaded as budget data in Step 2; nothing moves from a request to the public portal unless you put it in a budget file and upload it.
 
 Click any row to open it and read the full description, justification, and proposed funding source. Then optionally type **Admin Notes** (the staff member sees these) and choose **Approve**, **Recommend**, **Deny**, or **Under Review**. **Recommend** is for requests you are putting forward to the Select Board or Town Meeting without a final decision yet. They see the change and your notes the next time they sign in.
 

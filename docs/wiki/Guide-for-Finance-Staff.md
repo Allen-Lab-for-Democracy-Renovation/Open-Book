@@ -120,9 +120,11 @@ Go to **Data**.
 
 ![The Data tab listing each uploaded file with its category, row count, and status](https://raw.githubusercontent.com/Allen-Lab-for-Democracy-Renovation/Open-Book/main/docs/screenshots/admin-data.png)
 
-Every file you have uploaded is listed with its category, row count, and date. **Mapped** in green means the data saved correctly.
+Every file you have uploaded is listed with its category, row count, and date. **Mapped** in green means the data saved correctly and is on the portal. **Uploaded** in yellow means the file was received but the column step (2c) was never finished — none of its rows are on the portal. Either go back to **Upload** and do that file again, or **Delete** the unfinished one to clear it out.
 
-From here you can **Replace** a file (removes the old version and takes you back to Upload), **Delete** one upload, or **Delete All Data** and start over.
+The box at the top shows how big your database has grown. It's informational; how much room you have depends on the plan you chose with your database provider.
+
+From here you can **Download** an upload's saved data as a spreadsheet, **Replace** a file (removes the old version and takes you back to Upload), **Delete** one upload, or **Delete All Data** and start over.
 
 > **Careful:** deleting takes that data off the public portal immediately. If your portal is already live, residents stop seeing it until you upload a replacement.
 

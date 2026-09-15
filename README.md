@@ -69,11 +69,27 @@ When the terminal opens you'll see a blinking prompt. That's where you type the 
 
 If you want to install Git: go to <https://git-scm.com/downloads> and run the installer for your operating system.
 
-### 4. A Postgres database connection string
+### 4. A Postgres database
 
-**What it is:** Postgres is the database OpenBook uses to store town settings, uploaded budget rows, staff invites, and admin accounts. You can run Postgres on your own computer, but for testing it is usually easiest to create a free hosted database through Vercel Storage, Neon, or Supabase.
+**What it is:** **Postgres** is the database OpenBook stores everything in — town settings, uploaded budget rows, staff accounts, and so on. OpenBook itself doesn't include a database; you point it at one. You do that with a **connection string**: a single line of text, starting with `postgresql://`, that contains the address, username, and password of your database. Think of it as the database's mailing address plus the key to the door.
 
-After creating the database, copy its connection string. It usually starts with `postgresql://`. You will paste it into `.env` in the steps below.
+**Where to get one:** You don't install anything. The easiest route is a free hosted database from one of these providers — any of them takes about five minutes:
+
+- **[Neon](https://neon.tech)** — the simplest for a first try. Sign up (a GitHub or Google account works), click **New Project**, give it any name, and on the project's dashboard click **Connect**. Copy the connection string it shows.
+- **[Supabase](https://supabase.com)** — sign up, click **New project**, choose a database password (write it down), then go to **Project Settings → Database** and copy the connection string under **Connection string** (pick the "URI" format).
+- **[Vercel Storage](https://vercel.com/storage)** — a good choice if you'll later host on Vercel. From your Vercel dashboard, open **Storage → Create Database → Postgres**, then copy the `DATABASE_URL` from the database's **.env.local** tab.
+
+Whichever you use, the result is one long line that looks something like this (yours will have real values):
+
+```
+postgresql://username:password@some-host.provider.com:5432/dbname?sslmode=require
+```
+
+Copy the whole thing — you'll paste it into a settings file in [Step 3](#step-3-configure-the-database) below. Treat it like a password: anyone who has it can read and change your data.
+
+**If you'd rather keep everything on your own computer:** you can run Postgres locally instead. The simplest way is Docker; the [Local Testing Guide on the wiki](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/wiki/Local-Testing-Guide) has the one command to start it, and the connection string is then `postgresql://openbook:openbook@localhost:5432/openbook`.
+
+> **Pooled vs. direct:** some providers (Neon and Supabase in particular) show you two connection strings, one labeled "pooled" or "pooler" and one "direct". Copy both. Step 3 explains where each one goes; if you only see one, that's fine too.
 
 ## Quick start
 
@@ -135,9 +151,9 @@ OpenBook reads its database settings from a local file named `.env`. Create that
 cp .env.example .env
 ```
 
-Open `.env` in a text editor and replace the sample `DATABASE_URL` value with your Postgres connection string. (A `.env.local` file works too, if you prefer the Next.js convention.)
+Open `.env` in a text editor (TextEdit, Notepad, or VS Code all work) and replace the sample value after `DATABASE_URL=` with the connection string you copied in [prerequisite 4](#4-a-postgres-database), keeping the quotation marks around it. Save the file. (A `.env.local` file works too, if you prefer the Next.js convention.)
 
-If your database provider gives you both a pooled connection string and a direct connection string, use the pooled string for `DATABASE_URL` and the direct string for `DIRECT_URL`.
+If your provider gave you both a **pooled** and a **direct** connection string, put the pooled one in `DATABASE_URL`, then remove the `#` in front of `DIRECT_URL` and paste the direct one there. If you only have one string, leave the `DIRECT_URL` line alone.
 
 ### Step 4: Start OpenBook
 

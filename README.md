@@ -30,7 +30,7 @@ This part is a complete walk-through from a fresh computer to a running OpenBook
 
 ## Before you begin: what you need on your computer
 
-You need a few things before OpenBook can run. They are free, official, and safe to install.
+You need a few things before OpenBook can run. They are free, widely used tools that are safe to install.
 
 ### 1. Node.js (version 20.9 or newer; 20 LTS recommended)
 

@@ -155,14 +155,22 @@ export default function AdminRequestsPage() {
       </h1>
       <p className="text-gray-500 mt-1 mb-4">
         Review and manage staff capital expenditure requests for {town.name}.
+        Internal only &mdash; nothing on this page is visible to the public.
       </p>
 
       <div className="mb-6">
         <HelpBox variant="info">
-          <p>
+          <p className="mb-2">
             Capital requests are submitted by staff members for review. You can
             approve, recommend, deny, or mark requests as under review. Add
             notes to communicate decisions back to staff.
+          </p>
+          <p>
+            Requests, amounts, notes, and statuses are seen only by you and the
+            staff member who submitted them. They never appear on the public
+            portal &mdash; the public <strong>Capital</strong> tab shows the
+            capital budget data you upload, which is separate from these
+            requests.
           </p>
         </HelpBox>
       </div>

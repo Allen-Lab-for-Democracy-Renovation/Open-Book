@@ -19,7 +19,7 @@ Residents can:
 - Print a complete budget book
 - See reserve and stabilization fund balances over time
 - Access supporting documents and links your office provides
-- Send questions directly to your finance office
+- Find your finance office's contact email if they have a question
 
 Every page is built for someone who has never read a municipal budget. Spending opens with the big picture and lets residents drill down as far as individual line items:
 
@@ -63,7 +63,7 @@ The person in your finance office who manages the budget data logs into the Open
 - Uploads the budget spreadsheet each fiscal year
 - Adds plain-language explanations for budget categories
 - Adds the documents residents might want (adopted budget, meeting minutes, audit reports) — either as links to files already on your website, or uploaded to OpenBook directly
-- Responds to questions residents submit through the portal
+- Publishes answers to common questions on the portal's FAQ page
 
 This does not require any technical knowledge. It is a web form, similar to updating a website.
 
@@ -91,15 +91,15 @@ The four types of data OpenBook can display:
 
 ## Who Controls the Data?
 
-Your town controls everything. OpenBook is self-hosted, meaning all data — the budget numbers, any uploaded documents, resident questions — lives on a server your town operates or controls. There is no third-party company holding your data.
+Your town controls everything. OpenBook is self-hosted, meaning all data — the budget numbers, any uploaded documents, staff accounts — lives on a server your town operates or controls. There is no third-party company holding your data.
 
 ---
 
 ## What Happens to Resident Questions?
 
-Residents' questions go straight to the email address you set in the admin settings — typically your finance office — and arrive like any other email. Nothing sits in a queue waiting to be noticed.
+OpenBook doesn't collect or forward questions. The portal simply shows the contact email your finance office enters in the admin settings — typically a department address like `finance@yourtown.gov` — with a "Please contact …" note on the FAQ and Documents pages. A resident with a question emails that address directly from their own email, and it arrives in your inbox like any other message. There is no inbox inside OpenBook to check.
 
-Your finance staff can also publish answers to common questions on the portal's FAQ page, which cuts down on the same question arriving repeatedly.
+Your finance staff can publish answers to common questions on the portal's FAQ page, which cuts down on the same question arriving repeatedly.
 
 ---
 

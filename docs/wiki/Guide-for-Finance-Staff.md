@@ -210,7 +210,7 @@ Here is how it reaches residents:
 
 ## Answering Resident Questions
 
-Residents' questions go straight to the Contact Email you set in Settings, so they arrive in your inbox like any other email.
+OpenBook doesn't collect questions itself. The portal shows the Contact Email you set in Settings with a "Please contact …" note, and residents email you directly from their own email — so questions arrive in that inbox like any other message, and there is nothing to check inside OpenBook.
 
 The **FAQs** tab is where you publish questions and answers on the portal itself. If the same question keeps arriving, answering it there saves you replying again.
 

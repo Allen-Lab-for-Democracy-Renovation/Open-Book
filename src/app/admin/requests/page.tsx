@@ -23,7 +23,7 @@ interface CapitalRequest {
   adminNotes: string | null;
   createdAt: string;
   updatedAt: string;
-  staffUser: StaffUser;
+  staffUser: StaffUser | null;
 }
 
 interface Town {
@@ -155,14 +155,22 @@ export default function AdminRequestsPage() {
       </h1>
       <p className="text-gray-500 mt-1 mb-4">
         Review and manage staff capital expenditure requests for {town.name}.
+        Internal only &mdash; nothing on this page is visible to the public.
       </p>
 
       <div className="mb-6">
         <HelpBox variant="info">
-          <p>
+          <p className="mb-2">
             Capital requests are submitted by staff members for review. You can
             approve, recommend, deny, or mark requests as under review. Add
             notes to communicate decisions back to staff.
+          </p>
+          <p>
+            Requests, amounts, notes, and statuses are seen only by you and the
+            staff member who submitted them. They never appear on the public
+            portal &mdash; the public <strong>Capital</strong> tab shows the
+            capital budget data you upload, which is separate from these
+            requests.
           </p>
         </HelpBox>
       </div>
@@ -238,7 +246,7 @@ export default function AdminRequestsPage() {
                     {formatCurrency(req.amount)}
                   </div>
                   <div className="col-span-2 text-sm text-gray-600 truncate">
-                    {req.staffUser.name}
+                    {req.staffUser?.name ?? "Removed user"}
                   </div>
                   <div className="col-span-1 text-xs text-gray-500">
                     {formatDate(req.createdAt)}
@@ -259,9 +267,12 @@ export default function AdminRequestsPage() {
                     <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                       <div>
                         <p className="text-gray-500 text-xs">Staff Member</p>
-                        <p className="font-medium">{req.staffUser.name}</p>
+                        <p className="font-medium">
+                          {req.staffUser?.name ?? "Removed user"}
+                        </p>
                         <p className="text-xs text-gray-500">
-                          {req.staffUser.email}
+                          {req.staffUser?.email ??
+                            "This staff account has been removed"}
                         </p>
                       </div>
                       <div>

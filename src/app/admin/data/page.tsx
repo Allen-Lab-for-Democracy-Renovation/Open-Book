@@ -172,7 +172,7 @@ export default function DataManagementPage() {
         </Link>
       </div>
 
-      <StorageIndicator />
+      <StorageIndicator refreshKey={uploads.map((u) => u.id).join(",")} />
 
       <HelpBox variant="info">
         <p>
@@ -235,15 +235,6 @@ export default function DataManagementPage() {
                       {new Date(upload.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 text-right space-x-3">
-                      {upload.rowCount > 0 && (
-                        <a
-                          href={`/api/uploads/${upload.id}/download`}
-                          className="text-gray-600 hover:text-gray-900 text-sm"
-                          aria-label={`Download data for ${upload.fileName}`}
-                        >
-                          Download
-                        </a>
-                      )}
                       <button
                         onClick={() => handleDownload(upload)}
                         disabled={downloading === upload.id}

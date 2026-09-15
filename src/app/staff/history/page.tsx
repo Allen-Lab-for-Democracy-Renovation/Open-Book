@@ -56,6 +56,7 @@ export default function StaffHistoryPage() {
   const statusStyles: Record<string, string> = {
     submitted: "bg-blue-100 text-blue-800",
     under_review: "bg-yellow-100 text-yellow-800",
+    recommended: "bg-purple-100 text-purple-800",
     approved: "bg-green-100 text-green-800",
     denied: "bg-red-100 text-red-800",
   };
@@ -63,6 +64,7 @@ export default function StaffHistoryPage() {
   const statusLabels: Record<string, string> = {
     submitted: "Submitted",
     under_review: "Under Review",
+    recommended: "Recommended",
     approved: "Approved",
     denied: "Denied",
   };
@@ -95,7 +97,7 @@ export default function StaffHistoryPage() {
       {/* Status Filter */}
       <div className="flex items-center gap-2 mb-4">
         <span className="text-sm text-gray-500">Filter:</span>
-        {["all", "submitted", "under_review", "approved", "denied"].map((s) => (
+        {["all", "submitted", "under_review", "recommended", "approved", "denied"].map((s) => (
           <button
             key={s}
             onClick={() => setFilterStatus(s)}

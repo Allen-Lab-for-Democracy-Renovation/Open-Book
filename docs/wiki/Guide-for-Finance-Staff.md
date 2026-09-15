@@ -1,6 +1,6 @@
 # OpenBook Guide for Finance Staff
 
-This guide is for whoever in your finance office keeps the budget portal up to date. You do not need any technical background. Everything happens in a web browser, like updating any other website.
+This guide is for whoever keeps the budget portal up to date — a Finance Director, Town Accountant, or, in many towns, the Town Manager or Administrator themselves. You do not need any technical background. Everything happens in a web browser, like updating any other website. (For the big-picture overview of what OpenBook is and what it costs, see the [Guide for Town Managers](Guide-for-Town-Managers).)
 
 **Start to finish, the first setup takes about an hour.** After that, updating the portal each year takes about twenty minutes.
 
@@ -31,10 +31,12 @@ After signing in, a row of tabs runs across the top of every page:
 | **Tooltips** | Plain-language explanations residents see on the portal |
 | **Documents** | Links and PDFs residents can open |
 | **FAQs** | Questions and answers shown on the portal |
-| **Users** | Inviting department staff who submit capital requests |
-| **Requests** | Reviewing capital requests those staff submit |
-| **Transfer** | Handing your admin account to someone else |
+| **Users** | Inviting department staff who submit capital requests *(internal)* |
+| **Requests** | Reviewing capital requests those staff submit *(internal)* |
+| **Transfer** | Handing your admin account to someone else *(internal)* |
 | **Preview** | Opens your public portal in a new tab |
+
+The tabs marked *internal* are never shown to residents: staff accounts, capital requests, and their status are visible only to you and to the staff member who submitted them. Everything else on this list ends up on the public portal.
 
 The first time through, work along the tabs in the order below. After that you will mostly use **Upload** once a year.
 
@@ -54,7 +56,7 @@ There are five things to fill in:
 
 **Town Logo** — click **Choose File** and pick your seal or logo. PNG, JPEG, or WebP, up to 10 MB. Large images are shrunk for you, so do not worry about the size of the original. The logo appears in the top-left corner of every page, next to your town name.
 
-**Contact Email** — where residents should send budget questions. This is shown publicly, so use a department address like `finance@yourtown.gov`, not a personal one.
+**Contact Email** — where residents should send budget questions. It appears on the portal's FAQ and Documents pages as "Please contact …", so use a department address like `finance@yourtown.gov`, not a personal one.
 
 **About This Portal** — one or two sentences telling residents what this site is. For example: *"Riverton's budget portal lets residents explore how the town raises and spends money each fiscal year."*
 
@@ -106,7 +108,9 @@ If something required is still missing, a yellow box tells you what before you c
 
 When the warnings are gone, click **Confirm & Save Data**.
 
-> **Tip:** Upload one file at a time. Do expenses first, then come back for revenues, and so on. Each kind of data stands on its own.
+> **Your portal goes live at this moment.** Saving the first upload is what makes the public portal visible to residents — there is no separate "publish" button. If you want to get everything right before anyone can see it, do the setup on a test database first (see the Local Testing Guide), or simply don't share the address until you're happy with it.
+
+> **Tip:** Upload one file at a time. Do expenses first, then come back for revenues, and so on. Each kind of data stands on its own. If you upload a file covering a fiscal year that already has data in that category, OpenBook warns you and asks before replacing the old rows.
 
 ---
 
@@ -116,9 +120,11 @@ Go to **Data**.
 
 ![The Data tab listing each uploaded file with its category, row count, and status](https://raw.githubusercontent.com/Allen-Lab-for-Democracy-Renovation/Open-Book/main/docs/screenshots/admin-data.png)
 
-Every file you have uploaded is listed with its category, row count, and date. **Mapped** in green means the data saved correctly.
+Every file you have uploaded is listed with its category, row count, and date. **Mapped** in green means the data saved correctly and is on the portal. **Uploaded** in yellow means the file was received but the column step (2c) was never finished — none of its rows are on the portal. Either go back to **Upload** and do that file again, or **Delete** the unfinished one to clear it out.
 
-From here you can **Replace** a file (removes the old version and takes you back to Upload), **Delete** one upload, or **Delete All Data** and start over.
+The box at the top shows how big your database has grown. It's informational; how much room you have depends on the plan you chose with your database provider.
+
+From here you can **Download** an upload's saved data as a spreadsheet, **Replace** a file (removes the old version and takes you back to Upload), **Delete** one upload, or **Delete All Data** and start over.
 
 > **Careful:** deleting takes that data off the public portal immediately. If your portal is already live, residents stop seeing it until you upload a replacement.
 
@@ -154,7 +160,7 @@ A tooltip is a short explanation that appears when someone hovers over or taps a
 
 Categories that already have an explanation are marked with a `●`.
 
-> **Example.** For "Employee Benefits": *"Town-wide costs like health insurance and retirement assessments that are not charged to a single department."*
+> **Example:** For "Employee Benefits": *"Town-wide costs like health insurance and retirement assessments that are not charged to a single department."*
 
 **Line item hover text** works the same way, for individual rows like "Cherry Sheet Assessments."
 
@@ -206,7 +212,7 @@ Here is how it reaches residents:
 
 ## Answering Resident Questions
 
-Residents' questions go straight to the Contact Email you set in Settings, so they arrive in your inbox like any other email.
+OpenBook doesn't collect questions itself. The portal shows the Contact Email you set in Settings with a "Please contact …" note, and residents email you directly from their own email — so questions arrive in that inbox like any other message, and there is nothing to check inside OpenBook.
 
 The **FAQs** tab is where you publish questions and answers on the portal itself. If the same question keeps arriving, answering it there saves you replying again.
 
@@ -218,9 +224,14 @@ Skip this section unless your town uses the staff portal.
 
 Department heads can sign in separately and submit capital requests. They appear in the **Requests** tab with the department, purpose, amount, who submitted it, and the date.
 
-Click any row to open it and read the full description, justification, and proposed funding source. Then optionally type **Admin Notes** (the staff member sees these) and choose **Approve**, **Deny**, or **Under Review**. They see the change the next time they sign in.
+**These requests are internal.** Residents never see them — not the requests, the amounts, the notes, or the status. Only you (the admin) and the staff member who submitted a request can see it. This is separate from the public **Capital** tab on the portal, which shows the capital *projects* you uploaded as budget data in Step 2; nothing moves from a request to the public portal unless you put it in a budget file and upload it.
 
-To invite department staff, use the **Users** tab: enter their email, click **Create Invite**, and send them the link that gets copied to your clipboard. Each link works once.
+Click any row to open it and read the full description, justification, and proposed funding source. Then optionally type **Admin Notes** (the staff member sees these) and choose **Approve**, **Recommend**, **Deny**, or **Under Review**. **Recommend** is for requests you are putting forward to the Select Board or Town Meeting without a final decision yet. They see the change and your notes the next time they sign in.
+
+To invite department staff, use the **Users** tab: enter their email, click **Create Invite**, and send them the link that gets copied to your clipboard. Each link works once. The same tab has two more buttons for each staff member:
+
+- **Reset Password** creates a single-use reset link and copies it to your clipboard — send it to them the same way as an invite. Nothing is emailed automatically.
+- **Remove** deletes their account. Any requests they submitted stay on record, marked "Removed user".
 
 ---
 
@@ -251,7 +262,13 @@ Once a year, when the new budget is adopted:
 
 - **Upload several years if you have them.** Trend charts and change columns appear on their own once there is more than one year of data.
 - **Check it on your phone.** Many residents will. Open Preview on your phone and scroll through.
-- **Nothing is public until you publish.** Take your time getting it right.
+- **The portal is public from your first upload.** If you'd like a dry run first, use a separate test database, or just keep the address to yourself until it looks right.
 - **The Budget Book tab prints.** It assembles your data into a formatted document you can print or save as a PDF for meetings, and it can include the prior year with the change from year to year.
 
 ![The Budget Book view, a printable summary of the budget](https://raw.githubusercontent.com/Allen-Lab-for-Democracy-Renovation/Open-Book/main/docs/screenshots/portal-budget-book.png)
+
+---
+
+## If Something Isn't Working
+
+Tell us. Open an issue at [github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/issues](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/issues/new) describing what you were doing, what happened, and the page you were on (a screenshot helps — crop out anything private), or email Sarah Hubbard at [sarah_hubbard@hks.harvard.edu](mailto:sarah_hubbard@hks.harvard.edu).

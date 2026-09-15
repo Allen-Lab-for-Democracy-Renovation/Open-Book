@@ -1,18 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import HelpBox from "@/components/admin/HelpBox";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
+  // null while we find out whether registration is open.
+  const [registrationOpen, setRegistrationOpen] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/register")
+      .then((r) => r.json())
+      .then((d) => setRegistrationOpen(Boolean(d.open)))
+      .catch(() => setRegistrationOpen(true));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +47,7 @@ export default function RegisterPage() {
         return;
       }
 
+      setEmailSent(Boolean(data.emailSent));
       setRegisteredEmail(email);
     } catch {
       setError("Something went wrong");
@@ -60,9 +69,19 @@ export default function RegisterPage() {
             Account created
           </h1>
           <p className="text-gray-500 text-center mt-1 mb-6">
-            We&apos;ve sent a verification link to{" "}
-            <span className="font-medium text-gray-700">{registeredEmail}</span>.
-            Check your inbox to verify the email address.
+            {emailSent ? (
+              <>
+                We&apos;ve sent a verification link to{" "}
+                <span className="font-medium text-gray-700">{registeredEmail}</span>.
+                Check your inbox to verify the email address.
+              </>
+            ) : (
+              <>
+                The admin account for{" "}
+                <span className="font-medium text-gray-700">{registeredEmail}</span>{" "}
+                is ready to use.
+              </>
+            )}
           </p>
 
           <div className="flex gap-2">
@@ -86,6 +105,38 @@ export default function RegisterPage() {
         </div>
       </div>
     );
+  }
+
+  if (registrationOpen === false) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="w-full max-w-sm">
+          <h1 className="text-2xl font-semibold tracking-tight text-center">
+            Registration is closed
+          </h1>
+          <p className="text-gray-500 text-center mt-1 mb-6">
+            This portal already has an administrator.
+          </p>
+          <HelpBox variant="info">
+            <p>
+              To keep the portal secure, new admin accounts can only be created
+              by an existing admin. If you need access, ask your town&apos;s
+              current OpenBook administrator to sign in and create an account
+              for you, or use the Transfer tab to hand the account over.
+            </p>
+          </HelpBox>
+          <p className="text-center text-sm text-gray-500 mt-6">
+            <Link href="/admin/login" className="text-blue-600 hover:underline">
+              Sign in
+            </Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (registrationOpen === null) {
+    return null;
   }
 
   return (

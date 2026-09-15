@@ -21,7 +21,7 @@ This is useful for:
 
 Install both of these before starting:
 
-**1. Node.js 18 or higher**
+**1. Node.js 20.9 or higher**
 Download from [nodejs.org](https://nodejs.org). Choose the version labeled **LTS** (Long Term Support). Run the installer and accept all defaults.
 
 To verify it installed correctly, open a terminal and type:
@@ -154,7 +154,9 @@ If you want to see the portal with realistic budget data already filled in, run:
 npm run seed
 ```
 
-This loads sample budget data from the `sample-data/` folder in the project. After seeding, go to `http://localhost:3000` and you will see a working portal with charts and tables populated.
+This loads sample budget data from the `sample-data/` folder in the project as a sample town called "Sutton". After seeding, go to `http://localhost:3000/sutton` and you will see a working portal with charts and tables populated.
+
+The sample data only loads into an **empty** database. If your database already has a town in it (for example, one you created through the admin panel), the command stops and tells you so. To start over, reset the database first — see "Database errors after pulling updates" below for the Docker command — then run `npm run seed` again.
 
 ---
 

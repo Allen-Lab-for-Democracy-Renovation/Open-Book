@@ -6,6 +6,10 @@ const resend = process.env.RESEND_API_KEY
 
 const FROM = "OpenBook <onboarding@resend.dev>";
 
+/** Whether outbound email is configured. Without RESEND_API_KEY, the send
+ *  functions only log the link to the server console. */
+export const emailEnabled = resend !== null;
+
 export async function sendVerificationEmail(
   to: string,
   name: string,

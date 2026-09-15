@@ -8,7 +8,7 @@ This guide is for town department heads and staff members who use the OpenBook s
 
 The staff portal is a separate, password-protected section of OpenBook where department staff can submit requests for capital expenditures — things like equipment purchases, vehicle replacements, facility repairs, or infrastructure projects. Your finance office reviews these requests and approves or denies them.
 
-The staff portal is different from the public-facing budget portal (which any resident can visit) and different from the admin panel (which the finance office uses). You only have access to your own submissions.
+The staff portal is different from the public-facing budget portal (which any resident can visit) and different from the admin panel (which the finance office uses). You only have access to your own submissions, and nothing you submit is shown to the public: your requests, the amounts, and the finance office's notes and decisions are visible only to you and the finance office.
 
 ---
 
@@ -47,7 +47,7 @@ https://budget.yourtown.gov/staff/login
 
 Enter your email address and password and click **Log In**.
 
-If you forget your password, contact your finance office — they can help reset your access.
+If you forget your password, contact your finance office. They can generate a reset link for you from their admin panel and send it to you; opening it lets you choose a new password.
 
 ---
 
@@ -56,7 +56,7 @@ If you forget your password, contact your finance office — they can help reset
 After logging in, you will see your **staff dashboard**. This shows:
 
 - **Total Requests** — the number of capital requests you have submitted
-- **Pending** — requests that are submitted or under review and waiting for a decision
+- **Pending** — requests that are submitted, under review, or recommended and still waiting for a final decision
 - **Approved** — requests that have been approved by the finance office
 - Your **five most recent requests** with their current status
 
@@ -109,7 +109,7 @@ If you are not sure, leave this blank and the finance office can determine the s
 
 ---
 
-**Justification** *(optional)*
+**Justification** *(required)*
 Explain why this expenditure is necessary. What problem does it solve? What happens if it is not approved? What is the risk of deferring it?
 
 Example: *"HVAC units are original to the 1998 construction. Two units failed last winter requiring emergency repairs at a combined cost of $18,000. Continued operation risks building closure during heating season."*
@@ -129,7 +129,7 @@ You will see a confirmation message. The request is now in the finance office's 
 
 ## Step 5 — Track Your Requests
 
-To see the status of all your requests, click **View History** from your dashboard, or go to:
+To see the status of all your requests, click **History** in the top bar, or go to:
 
 ```
 https://budget.yourtown.gov/staff/history
@@ -141,6 +141,7 @@ Each request shows its current status:
 |---|---|
 | **Submitted** | Your request has been received and is waiting for review |
 | **Under Review** | The finance office is actively reviewing it |
+| **Recommended** | The finance office is putting it forward (for example, to the Select Board or Town Meeting) but a final decision hasn't been made |
 | **Approved** | Your request has been approved |
 | **Denied** | Your request was not approved for this cycle |
 
@@ -160,7 +161,7 @@ You can submit requests under any department name you type in. However, you shou
 OpenBook tracks the approval, but the actual budget process (Town Meeting vote, appropriation, etc.) happens through your town's normal procedures. An approved status in OpenBook means the finance office has reviewed and accepted it for consideration — it does not automatically appropriate funds.
 
 **I forgot my password. What do I do?**
-Contact your finance office. They can help reset your staff account.
+Contact your finance office. They can send you a one-time reset link from their admin panel.
 
 **The portal says my invite is invalid or already used.**
 Each invite link can only be used once. If you've already created an account with it, just sign in instead at `/staff/login`. If you haven't created an account yet and the link isn't working, ask your finance office to send you a fresh invite.

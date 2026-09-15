@@ -214,7 +214,7 @@ export default async function CapitalPage({
     "Fiscal Year": row.fiscalYear,
     Department: row.department || "",
     Purpose: row.purpose || "",
-    Amount: formatCurrency(row.amount),
+    Amount: row.amount,
     "Funding Source": row.fundingSource || "",
   }));
 

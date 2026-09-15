@@ -16,13 +16,21 @@ export default function TransferPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!confirm) {
-      setConfirm(true);
+
+    // Validate before asking for confirmation, so the person isn't asked to
+    // confirm a transfer that is going to be rejected anyway.
+    if (newPassword.length < 8) {
+      setError("Password must be at least 8 characters");
       return;
     }
-
     if (newPassword !== confirmPassword) {
       setError("Passwords do not match");
+      return;
+    }
+    setError("");
+
+    if (!confirm) {
+      setConfirm(true);
       return;
     }
 

@@ -64,7 +64,7 @@ npm run seed
 
 This loads the sample CSV files from `sample-data/` into the configured Postgres database as a sample town called "Sutton" (visible at `/sutton`).
 
-**Warning:** seeding first deletes every town, upload, and budget row in that database. Never run it against a live portal.
+Seeding only works on an empty database: if a town already exists, the command refuses and explains why. To reseed, point `DATABASE_URL` at a fresh database.
 
 ## Troubleshooting
 

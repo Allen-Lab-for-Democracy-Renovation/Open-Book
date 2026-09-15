@@ -167,7 +167,7 @@ npm run seed
 
 Run this in a **second** new terminal window (so the first one can keep running OpenBook). It creates a sample town called "Sutton" from the files in `sample-data/`; refresh your browser and open <http://localhost:3000/sutton> to see it.
 
-> **Warning:** `npm run seed` first **deletes every town, upload, and budget row** in the connected database. Only run it against a database you are happy to wipe — never against a live portal.
+The sample data only loads into an **empty** database. If the connected database already has a town in it, the command stops and explains why, so you can't accidentally run it against a real portal. To reseed, point `DATABASE_URL` at a fresh database first.
 
 ---
 
@@ -396,8 +396,6 @@ prisma/
 
 # Reporting problems and contributing
 
-OpenBook is open source and maintained by the [Allen Lab for Democracy Renovation](https://github.com/Allen-Lab-for-Democracy-Renovation). We want to hear from every town that uses it.
-
 ## Found a bug or have a suggestion?
 
 Open an issue on GitHub: <https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/issues/new>. You need a free GitHub account; no technical knowledge is required. A helpful issue includes:
@@ -411,6 +409,8 @@ Open an issue on GitHub: <https://github.com/Allen-Lab-for-Democracy-Renovation/
 If you'd rather not use GitHub, or the problem involves something sensitive like login details, email Sarah Hubbard at <sarah_hubbard@hks.harvard.edu>.
 
 ## Want to contribute?
+
+OpenBook is an open-source tool: the code is free for any municipality to use, and it gets better when the people using it contribute back. If you fix a problem, add a feature, or improve the documentation for your own town, we'd love for you to share it so every other town benefits too.
 
 Contributions of every kind are welcome — bug fixes, new features, better documentation, sample data from your town's accounting system, or simply telling us what was confusing. To get involved, reach out to Sarah Hubbard directly at <sarah_hubbard@hks.harvard.edu>; we'll help you find a good place to start.
 

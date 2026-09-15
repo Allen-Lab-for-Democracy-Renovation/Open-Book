@@ -156,7 +156,7 @@ npm run seed
 
 This loads sample budget data from the `sample-data/` folder in the project as a sample town called "Sutton". After seeding, go to `http://localhost:3000/sutton` and you will see a working portal with charts and tables populated.
 
-> **Warning:** seeding first deletes every town, upload, and budget row in the connected database. Only run it against your local test database — never against a live portal's database.
+The sample data only loads into an **empty** database. If your database already has a town in it (for example, one you created through the admin panel), the command stops and tells you so. To start over, reset the database first — see "Database errors after pulling updates" below for the Docker command — then run `npm run seed` again.
 
 ---
 

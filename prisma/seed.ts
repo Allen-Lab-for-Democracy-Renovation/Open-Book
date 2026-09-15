@@ -1,3 +1,4 @@
+import "./load-env";
 import { prisma } from "../src/lib/db.js";
 import * as fs from "fs";
 import * as path from "path";
@@ -21,13 +22,26 @@ function parseAmount(value: string): number {
 }
 
 async function main() {
-  console.log("Seeding database...");
+  // Refuse to touch a database that already has a town in it. The seed is
+  // for demos on an empty database; run against a live portal it would
+  // erase the town's real budget, and there is no undo.
+  const existingTowns = await prisma.town.findMany({
+    select: { name: true, slug: true, _count: { select: { budgetRows: true } } },
+  });
+  if (existingTowns.length > 0) {
+    console.error("Refusing to seed: this database already contains data.");
+    for (const t of existingTowns) {
+      console.error(`  - ${t.name} (/${t.slug}), ${t._count.budgetRows} budget rows`);
+    }
+    console.error(
+      "\nThe sample data can only be loaded into an empty database. Point\n" +
+        "DATABASE_URL at a fresh one (the Local Testing Guide on the wiki shows\n" +
+        "how to reset a Docker test database) and run this again."
+    );
+    process.exit(1);
+  }
 
-  // Clear existing data
-  await prisma.budgetRow.deleteMany();
-  await prisma.columnMapping.deleteMany();
-  await prisma.upload.deleteMany();
-  await prisma.town.deleteMany();
+  console.log("Seeding database...");
 
   // Create Sutton
   const sutton = await prisma.town.create({

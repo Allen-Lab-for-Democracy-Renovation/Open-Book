@@ -34,9 +34,9 @@ You need a few things before OpenBook can run. They are free, official, and safe
 
 ### 1. Node.js (version 20.9 or newer; 20 LTS recommended)
 
-**What it is.** Node.js is the program that runs OpenBook on your computer. OpenBook is written in a language called JavaScript/TypeScript, and Node.js is what reads and executes it. Installing Node.js also installs **`npm`** ("node package manager"), which downloads the small building-block libraries OpenBook depends on so you don't have to.
+**What it is:** Node.js is the program that runs OpenBook on your computer. OpenBook is written in a language called JavaScript/TypeScript, and Node.js is what reads and executes it. Installing Node.js also installs **`npm`** ("node package manager"), which downloads the small building-block libraries OpenBook depends on so you don't have to.
 
-**How to install it.**
+**How to install it:**
 
 - Go to <https://nodejs.org> in your web browser.
 - Click the big green button labeled "LTS" (Long-Term Support).
@@ -53,9 +53,9 @@ You should see two version numbers print out, something like `v20.11.1` and `10.
 
 ### 2. A "terminal" application
 
-**What it is.** A **terminal** (also called a "command line" or "shell") is a text-based way to give your computer instructions. Instead of clicking, you type a command and press Enter. OpenBook needs to be started from a terminal.
+**What it is:** A **terminal** (also called a "command line" or "shell") is a text-based way to give your computer instructions. Instead of clicking, you type a command and press Enter. OpenBook needs to be started from a terminal.
 
-**Where to find it.**
+**Where to find it:**
 
 - **macOS**: Open the **Terminal** app. The easiest way: press `Cmd + Space`, type `Terminal`, and press Enter.
 - **Windows**: Open **PowerShell** or **Windows Terminal**. Press the Windows key, type `PowerShell`, and press Enter.
@@ -65,13 +65,13 @@ When the terminal opens you'll see a blinking prompt. That's where you type the 
 
 ### 3. (Optional but recommended) Git
 
-**What it is.** **Git** is a tool for downloading and tracking changes to code. The OpenBook code lives in a **repository** on GitHub. You can either use Git to download it (the standard way) or download a ZIP file from the GitHub website (no Git required). Both are explained below.
+**What it is:** **Git** is a tool for downloading and tracking changes to code. The OpenBook code lives in a **repository** on GitHub. You can either use Git to download it (the standard way) or download a ZIP file from the GitHub website (no Git required). Both are explained below.
 
 If you want to install Git: go to <https://git-scm.com/downloads> and run the installer for your operating system.
 
 ### 4. A Postgres database connection string
 
-**What it is.** Postgres is the database OpenBook uses to store town settings, uploaded budget rows, staff invites, and admin accounts. You can run Postgres on your own computer, but for testing it is usually easiest to create a free hosted database through Vercel Storage, Neon, or Supabase.
+**What it is:** Postgres is the database OpenBook uses to store town settings, uploaded budget rows, staff invites, and admin accounts. You can run Postgres on your own computer, but for testing it is usually easiest to create a free hosted database through Vercel Storage, Neon, or Supabase.
 
 After creating the database, copy its connection string. It usually starts with `postgresql://`. You will paste it into `.env` in the steps below.
 
@@ -96,7 +96,7 @@ The rest of this section explains each step for people who haven't done this bef
 
 You need a copy of OpenBook's files on your computer. Pick one of these two options.
 
-**Option A — Using Git (recommended).** In your terminal, type:
+**Option A — Using Git (recommended):** In your terminal, type:
 
 ```bash
 git clone https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book.git
@@ -105,7 +105,7 @@ cd Open-Book
 
 The first command copies the project into a new folder called `Open-Book`. The second (`cd`, "change directory") moves the terminal _into_ that folder so the next commands operate on OpenBook's files.
 
-**Option B — Without Git.** Go to <https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book>, click the green "Code" button, and choose "Download ZIP." Unzip the file somewhere convenient (for example, your Documents folder). Then in your terminal, navigate into that folder. For example:
+**Option B — Without Git:** Go to <https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book>, click the green "Code" button, and choose "Download ZIP." Unzip the file somewhere convenient (for example, your Documents folder). Then in your terminal, navigate into that folder. For example:
 
 ```bash
 cd ~/Documents/Open-Book-main

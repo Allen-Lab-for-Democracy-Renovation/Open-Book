@@ -156,7 +156,7 @@ A tooltip is a short explanation that appears when someone hovers over or taps a
 
 Categories that already have an explanation are marked with a `●`.
 
-> **Example.** For "Employee Benefits": *"Town-wide costs like health insurance and retirement assessments that are not charged to a single department."*
+> **Example:** For "Employee Benefits": *"Town-wide costs like health insurance and retirement assessments that are not charged to a single department."*
 
 **Line item hover text** works the same way, for individual rows like "Cherry Sheet Assessments."
 

@@ -2,6 +2,8 @@
 
 This guide is written for Town Managers, Town Administrators, Finance Directors, and Select Board members who are considering or overseeing the adoption of OpenBook. You do not need any technical knowledge to read this guide.
 
+In many towns the Town Manager or Administrator is also the person who manages the budget data and will be the one uploading it. If that's you, this guide gives you the overview, and the **[Guide for Finance Staff](Guide-for-Finance-Staff)** is your step-by-step manual for actually running the portal — plan to read both.
+
 ---
 
 ## What Is OpenBook?
@@ -41,7 +43,7 @@ The only potential cost is **web hosting** — the server that keeps the portal 
 
 ## What Does My Team Need to Do?
 
-There are three people (or roles) involved in getting OpenBook running. Each one does their part once, and then mostly stays out of the way.
+There are three jobs involved in getting OpenBook running. They don't have to be three different people — in a small town the Town Manager often does the second one personally, and sometimes the first too. Each job is done once, and then mostly stays out of the way.
 
 ### Role 1: Your IT Contact (One-Time Setup — A Few Hours)
 
@@ -57,15 +59,15 @@ What IT does:
 
 They should, however, plan to pull in OpenBook updates once or twice a year. Your portal runs from your own copy of the software, so improvements and fixes made to the project do not reach your site until someone updates that copy. The IT guide explains how; it takes a few minutes.
 
-### Role 2: Finance Office / Budget Staff (Ongoing — A Few Hours Per Year)
+### Role 2: Whoever Manages the Budget Data (Ongoing — A Few Hours Per Year)
 
-The person in your finance office who manages the budget data logs into the OpenBook admin panel from any web browser and:
+This is usually the Finance Director, Town Accountant, or the Town Manager/Administrator themselves — whoever already owns the budget spreadsheet. That person logs into the OpenBook admin panel from any web browser and:
 - Uploads the budget spreadsheet each fiscal year
 - Adds plain-language explanations for budget categories
 - Adds the documents residents might want (adopted budget, meeting minutes, audit reports) — either as links to files already on your website, or uploaded to OpenBook directly
 - Publishes answers to common questions on the portal's FAQ page
 
-This does not require any technical knowledge. It is a web form, similar to updating a website.
+This does not require any technical knowledge. It is a web form, similar to updating a website. The **[Guide for Finance Staff](Guide-for-Finance-Staff)** walks through every step with screenshots; if you'll be doing this yourself, that's the guide to keep open.
 
 ### Role 3: Department Heads / Staff (Optional — As Needed)
 
@@ -118,15 +120,17 @@ Your IT contact will set this up. The portal is publicly accessible to anyone �
 ## How Long Does Setup Take?
 
 - **IT setup:** A few hours, done once
-- **First data upload:** 15–30 minutes
-- **Adding tooltips and documents:** 30–60 minutes, optional
+- **First data upload:** 15–30 minutes ([Finance Staff Guide, Step 2](Guide-for-Finance-Staff#step-2--upload-your-budget-data))
+- **Adding tooltips and documents:** 30–60 minutes, optional ([Steps 5–6](Guide-for-Finance-Staff#step-5--add-plain-language-explanations))
 
-After that, the annual update — uploading the new budget each year — takes about twenty minutes.
+After that, the annual update — uploading the new budget each year — takes about twenty minutes ([Updating the Portal Each Year](Guide-for-Finance-Staff#updating-the-portal-each-year)).
 
 ---
 
 ## How Do I Get Started?
 
-Share this wiki with your IT contact and your finance office staff. Ask your IT contact to read the **IT Department Guide** and begin setup. Once they hand you a login, your finance office staff can follow the **Finance Staff Guide** to set up the portal and upload data.
+1. Ask your IT contact (or whoever handles your website hosting) to read the **[Guide for IT Departments](Guide-for-IT-Departments)** and begin setup. They'll come back to you with a web address and an admin login.
+2. Whoever will manage the budget data — a finance staff member, or you — follows the **[Guide for Finance Staff](Guide-for-Finance-Staff)** to set up the portal and upload the first year's data. It's about an hour the first time.
+3. If you want department heads to submit capital requests through OpenBook, send them the **[Guide for Department Staff](Guide-for-Department-Staff)** along with their invite link. This step is optional.
 
 If you have questions about the software itself, the project is maintained at [github.com/Allen-Lab-for-Democracy-Renovation/Open-Book](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book). Problems can be reported on the [GitHub Issues page](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/issues/new), and anyone interested in contributing — or who just wants to talk about using OpenBook in their town — can reach Sarah Hubbard at [sarah_hubbard@hks.harvard.edu](mailto:sarah_hubbard@hks.harvard.edu).

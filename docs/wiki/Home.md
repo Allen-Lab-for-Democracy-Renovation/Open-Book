@@ -11,7 +11,7 @@ Welcome to the OpenBook documentation. OpenBook is a free, open-source budget tr
 ### I am a Town Manager, Finance Director, or Select Board Member
 → [Guide for Town Managers](Guide-for-Town-Managers)
 
-Learn what OpenBook is, what it costs, what your team needs to do, and how to get started — no technical knowledge required.
+Learn what OpenBook is, what it costs, what your team needs to do, and how to get started — no technical knowledge required. If you'll also be the one uploading the budget data, read this first and then the Finance Staff guide below.
 
 ---
 
@@ -22,7 +22,7 @@ Step-by-step instructions for deploying OpenBook to a server or cloud hosting pl
 
 ---
 
-### I am finance or admin staff managing the portal day-to-day
+### I am the person managing the portal day-to-day (finance staff, or the Town Manager)
 → [Guide for Finance Staff](Guide-for-Finance-Staff)
 
 How to use the admin panel: uploading budget data, adding tooltips and explanations, managing documents and links, publishing FAQs, and reviewing capital requests from town staff.

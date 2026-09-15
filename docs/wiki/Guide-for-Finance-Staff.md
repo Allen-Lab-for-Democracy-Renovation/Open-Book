@@ -1,6 +1,6 @@
 # OpenBook Guide for Finance Staff
 
-This guide is for whoever in your finance office keeps the budget portal up to date. You do not need any technical background. Everything happens in a web browser, like updating any other website.
+This guide is for whoever keeps the budget portal up to date — a Finance Director, Town Accountant, or, in many towns, the Town Manager or Administrator themselves. You do not need any technical background. Everything happens in a web browser, like updating any other website. (For the big-picture overview of what OpenBook is and what it costs, see the [Guide for Town Managers](Guide-for-Town-Managers).)
 
 **Start to finish, the first setup takes about an hour.** After that, updating the portal each year takes about twenty minutes.
 

@@ -59,4 +59,4 @@ If something doesn't work the way these guides say it should, please tell us —
 
 OpenBook is built for Massachusetts municipalities, by people who want budgets to be understandable. Contributions of every kind are welcome: code, documentation, sample data from your town's accounting system, design feedback, or just a note about what confused you.
 
-To get involved, reach out to Sarah Hubbard at [sarah_hubbard@hks.harvard.edu](mailto:sarah_hubbard@hks.harvard.edu). If you're comfortable with Git, the README's "Reporting problems and contributing" section describes the pull-request flow; these wiki pages live in the repository's `docs/wiki/` folder and are published here automatically, so documentation fixes are pull requests too.
+To get involved, reach out to Sarah Hubbard at [sarah_hubbard@hks.harvard.edu](mailto:sarah_hubbard@hks.harvard.edu). If you're comfortable with Git, the README's "Contributing and support" section describes the pull-request flow; these wiki pages live in the repository's `docs/wiki/` folder and are published here automatically, so documentation fixes are pull requests too.

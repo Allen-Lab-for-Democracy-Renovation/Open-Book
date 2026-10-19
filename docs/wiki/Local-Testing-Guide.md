@@ -1,204 +1,169 @@
-# Local Testing Guide (Optional — For IT Departments)
+# Local Testing Guide
 
-This guide is for IT staff or developers who want to run OpenBook on their own computer before deploying it to a live server. This is useful for testing the software, exploring how it works, or reviewing updates before they go live.
+This guide is for IT staff or developers who want to run OpenBook on their own computer before deploying it. It's a good way to explore the app, try out a code change, or review an update before it goes live.
 
-**You do not need to do this to use OpenBook.** If you are ready to deploy to a live server, go directly to the [IT Department Guide](Guide-for-IT-Departments).
+A local copy runs at `http://localhost:3000` and only you can see it. **You don't need this to use OpenBook.** If you're ready to go live, skip to the [Guide for IT Departments](Guide-for-IT-Departments).
 
----
+**Contents**
 
-## What "Running Locally" Means
-
-Running OpenBook locally means the app runs on your own laptop or desktop. It is only accessible from your computer — no one else can visit it. The web address will be `http://localhost:3000` instead of a real domain name.
-
-This is useful for:
-- Seeing how the app works before committing to a server
-- Testing a code change before pushing it live
-- Reviewing new updates from the OpenBook team before deploying them
+- [Prerequisites](#prerequisites)
+- [Step 1: Get the code](#step-1-get-the-code)
+- [Step 2: Set up the database](#step-2-set-up-the-database)
+- [Step 3: Install dependencies](#step-3-install-dependencies)
+- [Step 4: Start the app](#step-4-start-the-app)
+- [Step 5: Create an admin account](#step-5-create-an-admin-account)
+- [Step 6: Load sample data (optional)](#step-6-load-sample-data-optional)
+- [Stopping and restarting](#stopping-and-restarting)
+- [Pulling updates](#pulling-updates)
+- [Resetting the test database](#resetting-the-test-database)
+- [Troubleshooting](#troubleshooting)
 
 ---
 
 ## Prerequisites
 
-Install both of these before starting:
+Commands go in a **terminal**. On macOS, press Cmd + Space, type "Terminal", and press Enter. On Windows, press the Windows key, type "PowerShell", and press Enter.
 
-**1. Node.js 20.9 or higher**
-Download from [nodejs.org](https://nodejs.org). Choose the version labeled **LTS** (Long Term Support). Run the installer and accept all defaults.
-
-To verify it installed correctly, open a terminal and type:
-```bash
-node --version
-```
-You should see a version number like `v20.x.x`.
-
-**2. npm (comes with Node.js)**
-Verify it is available:
-```bash
-npm --version
-```
-You should see a version number like `9.x.x` or higher.
+- **Node.js 20.9 or newer.** Download the LTS version from [nodejs.org](https://nodejs.org); it includes `npm`. Check it worked by running `node --version`.
+- **A Postgres database.** Either:
+  - [Docker](https://www.docker.com/products/docker-desktop/), to run Postgres on your own computer, or
+  - a free hosted database from [Neon](https://neon.tech) or [Supabase](https://supabase.com), if you'd rather not install Docker.
+- **Git** (optional). It makes pulling updates easier. Install it from [git-scm.com](https://git-scm.com/downloads).
 
 ---
 
-## Step 1 — Download the Code
+## Step 1: Get the code
 
-Go to the OpenBook GitHub page and click the green **Code** button, then **Download ZIP**. Save the ZIP file somewhere easy to find (like your Desktop) and unzip it.
+With Git:
 
-Or, if you have `git` installed:
 ```bash
 git clone https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book.git
+cd Open-Book
 ```
+
+Without Git, click **Code → Download ZIP** on the [GitHub page](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book) and unzip it. Then type `cd ` (with a trailing space) in your terminal, drag the unzipped folder onto the window, and press Enter.
 
 ---
 
-## Step 2 — Open a Terminal in the Project Folder
+## Step 2: Set up the database
 
-**On Mac:**
-Open the Terminal app (search for it with Cmd + Space). Then navigate into the project folder:
-```bash
-cd ~/Desktop/Open-Book
-```
-*(Adjust the path if you saved it somewhere else.)*
+OpenBook connects to Postgres with a *connection string*, a single line starting with `postgresql://`.
 
-**On Windows:**
-Open Command Prompt or PowerShell. Navigate into the project folder:
-```
-cd C:\Users\YourName\Desktop\Open-Book
-```
+**Option A: Docker.** Start a local Postgres server:
 
----
-
-## Step 3 — Install Dependencies
-
-```bash
-npm install
-```
-
-This downloads everything the app needs. It may take a minute or two. You will see a lot of text — that is normal.
-
----
-
-## Step 4 — Create the Settings File
-
-OpenBook needs a Postgres database, even for local testing. The easiest way to get one on your own computer is to run Postgres in Docker; if you don't want to install Docker, you can instead create a free database in a few minutes at [Neon](https://neon.tech) or [Supabase](https://supabase.com) and use that connection string instead.
-
-**Option A — Docker (runs entirely on your computer):**
 ```bash
 docker run --name openbook-postgres -e POSTGRES_USER=openbook -e POSTGRES_PASSWORD=openbook -e POSTGRES_DB=openbook -p 5432:5432 -d postgres:16-alpine
 ```
-This starts a local Postgres server. Your connection string will be `postgresql://openbook:openbook@localhost:5432/openbook`.
 
-**Option B — Free hosted database (Neon or Supabase):**
-Create a free project and copy the connection string it gives you (it starts with `postgresql://`).
+Your connection string is `postgresql://openbook:openbook@localhost:5432/openbook`.
 
-Then create your settings file:
+**Option B: Neon or Supabase.** Create a free project and copy its connection string. On Neon, click **Connect**; on Supabase, go to **Project Settings → Database → Connection string** (URI format).
+
+Next, create the settings file:
+
 ```bash
 cp .env.example .env
 ```
 
-On Windows:
-```
-copy .env.example .env
-```
-
-Open the `.env` file in any text editor (Notepad, TextEdit, VS Code) and set:
+Open `.env` in any text editor and replace the whole sample value after `DATABASE_URL=` with your connection string, keeping the quotation marks. For Docker, that's:
 
 ```
 DATABASE_URL="postgresql://openbook:openbook@localhost:5432/openbook"
 ```
 
-(Use your own connection string if you chose Option B instead.)
+If your hosted provider shows two strings, **pooled** and **direct**, put the pooled one in `DATABASE_URL`, then remove the `#` before `DIRECT_URL` and paste the direct one there.
+
+Do this before Step 3, because the install reads this file.
 
 ---
 
-## Step 5 — Set Up the Database
+## Step 3: Install dependencies
 
-Nothing extra to run here — `npm run dev` (Step 6) applies any pending database migrations automatically before starting the app, as long as `DATABASE_URL` in your `.env` file is set correctly.
+```bash
+npm install
+```
+
+This takes a few minutes the first time. Lots of scrolling text is normal.
 
 ---
 
-## Step 6 — Start the App
+## Step 4: Start the app
 
 ```bash
 npm run dev
 ```
 
-After a few seconds you will see:
-```
-▲ Next.js 16.x.x (Turbopack)
-  - Local: http://localhost:3000
-✓ Ready in Xms
-```
-
-Open your browser and go to **http://localhost:3000**. You should see the OpenBook homepage.
+This also creates the database tables, so there's no separate setup command. When you see `Ready`, open <http://localhost:3000>. The app runs only while this terminal stays open.
 
 ---
 
-## Step 7 — Create an Admin Account
+## Step 5: Create an admin account
 
-Go to:
-```
-http://localhost:3000/admin/register
-```
+Go to <http://localhost:3000/admin/register> and enter a name, an email, and a password of at least 8 characters. The first person to register becomes the admin and is signed in immediately.
 
-Enter a name, email, and password (at least 8 characters).
-
-Click **Create Account**. You'll be signed in immediately — the first person to register automatically becomes the administrator.
+From here, the [Guide for Finance Staff](Guide-for-Finance-Staff) covers everything in the admin panel.
 
 ---
 
-## Step 8 — Load Sample Data (Optional)
+## Step 6: Load sample data (optional)
 
-If you want to see the portal with realistic budget data already filled in, run:
+To see a filled-in portal without uploading your own spreadsheets, open a second terminal in the project folder and run:
 
 ```bash
 npm run seed
 ```
 
-This loads sample budget data from the `sample-data/` folder in the project as a sample town called "Sutton". After seeding, go to `http://localhost:3000/sutton` and you will see a working portal with charts and tables populated.
+This creates a demo town called Sutton from the files in `sample-data/`. Visit <http://localhost:3000/sutton> to see it.
 
-The sample data only loads into an **empty** database. If your database already has a town in it (for example, one you created through the admin panel), the command stops and tells you so. To start over, reset the database first — see "Database errors after pulling updates" below for the Docker command — then run `npm run seed` again.
-
----
-
-## Stopping and Restarting the App
-
-To stop the app, go back to your terminal and press **Ctrl + C**.
-
-To start it again later, just run `npm run dev` again from the project folder. Your data will still be there — it is saved in your Postgres database (either the Docker container from Step 4, or your hosted database if you chose that option). If you used the Docker option and stopped the container, start it again with `docker start openbook-postgres` before running `npm run dev`.
+The seed only works on a database with no town in it, so skip it if you've already saved a town in **Settings**. If you have, and want the sample instead, [reset the database](#resetting-the-test-database) first.
 
 ---
 
-## Pulling Updates
+## Stopping and restarting
 
-If the OpenBook team has released updates and you want to test them locally:
+Press **Ctrl + C** in the terminal to stop the app, and run `npm run dev` again to restart. Your data is kept in the database between runs.
+
+If you used Docker and restarted your computer, start the database again first:
+
+```bash
+docker start openbook-postgres
+```
+
+---
+
+## Pulling updates
+
+To test the latest version:
 
 ```bash
 git pull origin main
 npm install
+npm run dev
 ```
 
-Then restart the app with `npm run dev` — any new database migrations are applied automatically on startup.
+Any database changes are applied automatically when the app starts.
 
 ---
 
-## Common Issues
+## Resetting the test database
 
-**"Cannot find module" error on startup**
-Run `npm install` again and retry.
+To wipe everything and start fresh with Docker:
 
-**Database errors after pulling updates**
-Migrations apply automatically the next time you run `npm run dev`, so first make sure `DATABASE_URL` in your `.env` file is still correct and your database is reachable (if you used the Docker option, confirm the container is running with `docker ps`). If errors persist and you're using the Docker option, you can wipe your local test database entirely and start fresh:
 ```bash
 docker rm -f openbook-postgres
 ```
-Then repeat Step 4's Docker command to create a new empty database, and run `npm run dev` followed by `npm run seed` if you want sample data back. (If you're using a hosted database from Neon or Supabase instead, use that provider's dashboard to reset it — don't run this against a database anyone else is using.)
 
-**Port 3000 is already in use**
-Another app is using that port. Either stop the other app, or run OpenBook on a different port:
-```bash
-npm run dev -- --port 3001
-```
-Then visit `http://localhost:3001`.
+Then rerun the `docker run` command from [Step 2](#step-2-set-up-the-database), run `npm run dev`, and run `npm run seed` if you want the sample back.
 
-**Changes are not showing up**
-The app uses hot reloading, so most changes appear automatically. If something seems stuck, stop the app (Ctrl + C) and run `npm run dev` again.
+With Neon or Supabase, reset or recreate the database from the provider's dashboard instead. Never do this to a database anyone else is using.
+
+---
+
+## Troubleshooting
+
+- **`command not found: node` or `npm`:** install Node.js, then close and reopen the terminal.
+- **"Cannot find module" on startup:** run `npm install` again.
+- **Database errors on startup:** check that `DATABASE_URL` in `.env` is correct. With Docker, run `docker ps` to confirm `openbook-postgres` is running. If errors continue, [reset the database](#resetting-the-test-database).
+- **Port 3000 is already in use:** close the other program, or run `npm run dev -- --port 3001` and open <http://localhost:3001>.
+- **Changes aren't showing up:** most changes appear automatically. If something seems stuck, stop the app with Ctrl + C and run `npm run dev` again.
+- **Something else:** [open a GitHub issue](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/issues/new) or email Sarah Hubbard at [sarah_hubbard@hks.harvard.edu](mailto:sarah_hubbard@hks.harvard.edu).

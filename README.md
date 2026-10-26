@@ -1,12 +1,16 @@
 # OpenBook
 
-[Live example](https://finance.suttonma.gov/openbook) · [Video tutorial](https://drive.google.com/file/d/1wRUJ7C5Ak9hRgzF0F0zTyr_axgLu3Fgs/view?usp=sharing) · [Learn more](https://ash.harvard.edu/resources/open-book-open-source-budget-transparency-for-municipalities/) · [Report a bug](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/issues/new) · [Wiki](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/wiki)
+[Live example](https://finance.suttonma.gov/openbook) · [Video tutorial](https://drive.google.com/file/d/1TQqr_wsY2va_tVfT1ZIegXhKJl2FYCHo/view?usp=sharing) · [Learn more](https://ash.harvard.edu/resources/open-book-open-source-budget-transparency-for-municipalities/) · [Report a bug](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/issues/new) · [Wiki](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/wiki)
 
 **Guides:** [Town Managers](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/wiki/Guide-for-Town-Managers) · [IT Departments](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/wiki/Guide-for-IT-Departments) · [Finance Staff](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/wiki/Guide-for-Finance-Staff) · [Department Staff](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/wiki/Guide-for-Department-Staff) · [Local Testing](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/wiki/Local-Testing-Guide)
 
 OpenBook is a free, open-source website that lets a town publish its budget online so residents can explore expenses, revenues, capital projects, and reserves in plain language. Finance staff upload the spreadsheets they already have, and OpenBook turns them into charts, searchable tables, and a printable budget book.
 
 It was built for Massachusetts municipalities and reads UMAS exports, but it works with any CSV or Excel budget file.
+
+[![Watch the 13-minute tutorial: Setting up OpenBook](docs/screenshots/tutorial-thumbnail.png)](https://drive.google.com/file/d/1TQqr_wsY2va_tVfT1ZIegXhKJl2FYCHo/view?usp=sharing)
+
+*New to OpenBook? This 13-minute video walks through what OpenBook is, how it fits together, and how to set it up. Click the image to watch.*
 
 **Contents**
 
@@ -48,8 +52,6 @@ OpenBook is a good fit if you want residents to be able to explore your budget o
 - **What it doesn't do:** OpenBook displays your contact email but doesn't receive or relay resident questions. It's a publishing tool, not an accounting system, so it only shows the data you upload.
 
 ## Documentation
-
-**New to OpenBook?** Start with the [video tutorial](https://drive.google.com/file/d/1wRUJ7C5Ak9hRgzF0F0zTyr_axgLu3Fgs/view?usp=sharing), an in-depth walkthrough of OpenBook.
 
 Detailed, role-specific guides live on the [OpenBook wiki](https://github.com/Allen-Lab-for-Democracy-Renovation/Open-Book/wiki):
 

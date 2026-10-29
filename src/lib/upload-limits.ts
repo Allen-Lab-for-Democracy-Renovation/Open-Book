@@ -15,3 +15,8 @@ export const MAX_LOGO_SIZE_LABEL = "1 MB";
 
 export const MAX_DATA_FILE_SIZE = 10 * 1024 * 1024;
 export const MAX_DATA_FILE_SIZE_LABEL = "10 MB";
+
+// Vercel rejects any request body over 4.5 MB before it reaches our code, so
+// data files are compressed in the browser (see data-file-transfer.ts) and must
+// fit under this once compressed. Leaves room for the other form fields.
+export const MAX_REQUEST_FILE_SIZE = 4 * 1024 * 1024;

@@ -31,9 +31,13 @@ export function formatPercent(value: number): string {
 
 export function parseAmount(value: string): number {
   if (!value) return 0;
-  const cleaned = value.toString().replace(/[$,\s()]/g, "");
+  const text = value.toString().trim();
+  // Accounting notation: "(5,000)" and "$(5,000)" are negative
+  const isParenthesized = /^\$?\s*\(.*\)$/.test(text);
+  const cleaned = text.replace(/[$,\s()]/g, "");
   const num = parseFloat(cleaned);
-  return isNaN(num) ? 0 : num;
+  if (isNaN(num)) return 0;
+  return isParenthesized ? -Math.abs(num) : num;
 }
 
 export function titleCase(str: string): string {

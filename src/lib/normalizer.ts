@@ -61,15 +61,19 @@ export function normalizeRows(
         });
       }
     } else if (fiscalYearColumn) {
-      // Long format: fiscal year is a column, look for an amount column
+      // Long format: one row per fiscal year, with the year, the amount and
+      // (optionally) its type each in their own column
       const amountCol = fieldMap.get("amount") || findAmountColumn(row, fieldMap);
-      const fy = row[fiscalYearColumn]?.trim() || "unknown";
-      const amount = amountCol ? parseAmount(row[amountCol]) : 0;
+      const fiscalYear = normalizeFiscalYear(row[fiscalYearColumn]);
+      const rawAmount = amountCol ? row[amountCol] : "";
+      // A row without a year can't be placed on any chart, and without an
+      // amount it carries no data
+      if (!fiscalYear || !rawAmount?.trim()) continue;
       results.push({
         ...baseRow,
-        fiscalYear: fy,
-        amount,
-        amountType: "budget",
+        fiscalYear,
+        amount: parseAmount(rawAmount),
+        amountType: normalizeAmountTypeLabel(get(row, "amountType")),
       });
     }
   }
@@ -83,6 +87,45 @@ export function normalizeRows(
  */
 export function stripZeroAmountRows(rows: NormalizedRow[]): NormalizedRow[] {
   return rows.filter((row) => row.amount !== 0 && row.amount != null);
+}
+
+/**
+ * "2026", "FY2026", "FY 2026" and "FY26" all become "2026", matching the
+ * years wide-format headers produce. Anything else is kept as typed.
+ */
+export function normalizeFiscalYear(value: string | undefined): string | null {
+  const text = value?.trim();
+  if (!text) return null;
+  const match = text.match(/^(?:fy\s*)?(\d{4}|\d{2})$/i);
+  if (!match) return text;
+  return match[1].length === 2 ? `20${match[1]}` : match[1];
+}
+
+/**
+ * Map a long-format Type cell ("Budget", "Adopted", "Actual", "Ending
+ * Balance", ...) to the amount types wide-format headers produce. Rows with
+ * no type are treated as budget, as before.
+ */
+export function normalizeAmountTypeLabel(value: string | null): string {
+  const text = value?.trim().toLowerCase();
+  if (!text) return "budget";
+  if (text.includes("balance")) return "balance";
+  if (text.includes("actual")) return "actual";
+  if (/budget|approp|adopted/.test(text)) return "budget";
+  return text;
+}
+
+/**
+ * True when every non-empty value looks like an amount type, which is how a
+ * long-format "Type" column is told apart from a category column also named
+ * "Type".
+ */
+export function looksLikeAmountTypes(values: string[]): boolean {
+  const filled = values.map((v) => v?.trim()).filter(Boolean);
+  return (
+    filled.length > 0 &&
+    filled.every((v) => /budget|actual|balance|approp|adopted/i.test(v))
+  );
 }
 
 function findAmountColumn(

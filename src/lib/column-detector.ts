@@ -1,4 +1,5 @@
 import type { DetectedMapping } from "@/types";
+import { looksLikeAmountTypes } from "./normalizer";
 
 interface DetectionRule {
   patterns: RegExp[];
@@ -50,6 +51,14 @@ const FIELD_RULES: Record<string, DetectionRule> = {
     patterns: [/^fiscal\s*year$/i, /^fy$/i, /^year$/i],
     priority: 11,
   },
+  amount: {
+    patterns: [/^amount$/i, /^total\s*amount$/i, /^dollars?$/i],
+    priority: 12,
+  },
+  amountType: {
+    patterns: [/^amount\s*type$/i, /^budget\s*type$/i],
+    priority: 13,
+  },
 };
 
 const FY_AMOUNT_PATTERN =
@@ -95,7 +104,34 @@ function matchFYAmount(
   return null;
 }
 
-export function detectColumns(headers: string[]): DetectedMapping[] {
+export function detectColumns(
+  headers: string[],
+  sampleRows: Record<string, string>[] = []
+): DetectedMapping[] {
+  const mappings = detectFromHeaders(headers);
+
+  // Long format (a Fiscal Year column instead of per-year amount columns):
+  // a column such as "Type" whose values are all Budget / Actual / Balance is
+  // the amount type, even though "Type" alone would otherwise read as Category.
+  const isLongFormat =
+    mappings.some((m) => m.targetField === "fiscalYear") &&
+    !mappings.some((m) => m.targetField === "fyAmount");
+  if (isLongFormat && !mappings.some((m) => m.targetField === "amountType")) {
+    const typeColumn = mappings.find(
+      (m) =>
+        (m.targetField === "category1" || m.targetField === "skip") &&
+        looksLikeAmountTypes(sampleRows.map((row) => row[m.sourceColumn]))
+    );
+    if (typeColumn) {
+      typeColumn.targetField = "amountType";
+      typeColumn.confidence = 0.9;
+    }
+  }
+
+  return mappings;
+}
+
+function detectFromHeaders(headers: string[]): DetectedMapping[] {
   const mappings: DetectedMapping[] = [];
   const usedFields = new Set<string>();
 
@@ -149,5 +185,7 @@ export const TARGET_FIELDS = [
   { value: "fundingSource", label: "Funding Source" },
   { value: "fiscalYear", label: "Fiscal Year" },
   { value: "fyAmount", label: "Fiscal Year Amount" },
+  { value: "amount", label: "Amount (with a Fiscal Year column)" },
+  { value: "amountType", label: "Amount Type (Budget / Actual / Balance)" },
   { value: "skip", label: "Skip this column" },
 ];

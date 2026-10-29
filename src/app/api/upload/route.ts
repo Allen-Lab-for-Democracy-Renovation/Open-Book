@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { parseCSV, parseExcel, cleanRows } from "@/lib/parser";
+import { parseUploadedFile } from "@/lib/parser";
+import { decodeDataFile, DataFileTooLargeError } from "@/lib/data-file-transfer";
 import { detectColumns } from "@/lib/column-detector";
 import type { DataCategory } from "@/types";
 import { requireAdmin } from "@/lib/auth";
@@ -19,13 +20,34 @@ export async function POST(request: Request) {
   if (admin instanceof NextResponse) return admin;
 
   const formData = await request.formData();
-  const file = formData.get("file") as File | null;
+  const sentFile = formData.get("file") as File | null;
   const townId = formData.get("townId") as string;
   const dataCategory = formData.get("dataCategory") as DataCategory;
 
-  if (!file || !townId || !dataCategory) {
+  if (!sentFile || !townId || !dataCategory) {
     return NextResponse.json(
       { error: "File, townId, and dataCategory are required" },
+      { status: 400 }
+    );
+  }
+
+  let file: File;
+  try {
+    file = await decodeDataFile(sentFile, formData.get("encoding"));
+  } catch (e) {
+    return NextResponse.json(
+      {
+        error: "Validation failed",
+        validationErrors: [
+          {
+            field: "file",
+            message:
+              e instanceof DataFileTooLargeError
+                ? `File is too large. Maximum size is ${MAX_DATA_FILE_SIZE_LABEL}.`
+                : "Could not read the uploaded file. Please try again.",
+          },
+        ],
+      },
       { status: 400 }
     );
   }
@@ -70,23 +92,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Town not found" }, { status: 404 });
   }
 
-  const fileType = fileName.endsWith(".xlsx") ? "xlsx" : "csv";
-
   let headers: string[];
   let rows: Record<string, string>[];
 
   try {
-    if (fileType === "csv") {
-      const text = await file.text();
-      const parsed = cleanRows(parseCSV(text));
-      headers = parsed.headers;
-      rows = parsed.rows;
-    } else {
-      const buffer = await file.arrayBuffer();
-      const parsed = cleanRows(parseExcel(buffer));
-      headers = parsed.headers;
-      rows = parsed.rows;
-    }
+    ({ headers, rows } = await parseUploadedFile(file));
   } catch (e) {
     return NextResponse.json(
       {
@@ -135,24 +145,11 @@ export async function POST(request: Request) {
     );
   }
 
-  // Create upload record
-  const upload = await prisma.upload.create({
-    data: {
-      townId,
-      fileName: file.name,
-      fileType,
-      dataCategory,
-      rowCount: rows.length,
-      status: "uploaded",
-      rawHeaders: JSON.stringify(headers),
-    },
-  });
-
-  // Auto-detect column mappings
-  const detectedMappings = detectColumns(headers);
+  // This is only a preview: nothing is stored until the admin confirms the
+  // mapping, so an abandoned preview leaves no record behind on the Data tab.
+  const detectedMappings = detectColumns(headers, rows);
 
   return NextResponse.json({
-    uploadId: upload.id,
     headers,
     sampleRows: rows.slice(0, 5),
     detectedMappings,

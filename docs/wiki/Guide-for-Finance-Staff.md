@@ -108,10 +108,7 @@ Go to **Data**.
 
 ![The Data tab listing each uploaded file with its category, row count, and status](https://raw.githubusercontent.com/Allen-Lab-for-Democracy-Renovation/Open-Book/main/docs/screenshots/admin-data.png)
 
-Each upload is listed with its category, row count, status, and date:
-
-- **mapped** (green): saved and showing on the portal.
-- **uploaded** (yellow): the file was received, but the column mapping wasn't finished, so none of its rows are on the portal. Upload it again, or delete it.
+Each upload is listed with its category, row count, status, and date. A file appears here only once its data has been saved, so everything listed is showing on the portal. If you leave the upload page before confirming the column mapping, or saving fails, nothing is added.
 
 For each upload you can **Download** the saved data as a spreadsheet, **Replace** it (this deletes it and opens Upload so you can redo it), or **Delete** it. **Delete All Data** at the bottom starts over. Deleting removes that data from the public portal immediately.
 

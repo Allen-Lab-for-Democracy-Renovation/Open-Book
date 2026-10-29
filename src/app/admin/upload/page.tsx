@@ -9,7 +9,9 @@ import HelpBox from "@/components/admin/HelpBox";
 import {
   MAX_DATA_FILE_SIZE,
   MAX_DATA_FILE_SIZE_LABEL,
+  MAX_REQUEST_FILE_SIZE,
 } from "@/lib/upload-limits";
+import { encodeDataFile, type DataFileEncoding } from "@/lib/data-file-transfer";
 
 interface CategoryRequirement {
   field: string;
@@ -143,11 +145,28 @@ function getMappingErrors(
   const errors: string[] = [];
   const req = CATEGORY_REQUIREMENTS[category];
   const mappedFields = new Set(mappings.map((m) => m.targetField));
+  // Long format: one row per year, with Fiscal Year and Amount columns
+  const hasLongFormatAmounts =
+    mappedFields.has("fiscalYear") && mappedFields.has("amount");
 
   for (const r of req.required) {
-    if (!mappedFields.has(r.field)) {
+    if (r.field === "fyAmount") {
+      if (!mappedFields.has("fyAmount") && !hasLongFormatAmounts) {
+        errors.push(
+          `Missing required mapping: ${r.label} (${r.reason}). If your file has one row per year instead, map a Fiscal Year column and an Amount column.`
+        );
+      }
+    } else if (!mappedFields.has(r.field)) {
       errors.push(`Missing required mapping: ${r.label} (${r.reason}).`);
     }
+  }
+
+  if (mappedFields.has("amount") && mappedFields.has("fyAmount")) {
+    errors.push(
+      `Use either per-year amount columns (Fiscal Year Amount) or a single Amount column with a Fiscal Year column, not both.`
+    );
+  } else if (mappedFields.has("amount") && !mappedFields.has("fiscalYear")) {
+    errors.push(`Map a Fiscal Year column so each Amount has a year.`);
   }
 
   const fyAmounts = mappings.filter((m) => m.targetField === "fyAmount");
@@ -271,11 +290,12 @@ const TARGET_FIELDS = [
   { value: "fundingSource", label: "Funding Source" },
   { value: "fiscalYear", label: "Fiscal Year" },
   { value: "fyAmount", label: "Fiscal Year Amount" },
+  { value: "amount", label: "Amount (with a Fiscal Year column)" },
+  { value: "amountType", label: "Amount Type (Budget / Actual / Balance)" },
   { value: "skip", label: "Skip this column" },
 ];
 
 interface UploadResult {
-  uploadId: string;
   headers: string[];
   sampleRows: Record<string, string>[];
   detectedMappings: DetectedMapping[];
@@ -302,7 +322,12 @@ export default function UploadPage() {
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>(
     []
   );
-  const [rawData, setRawData] = useState<Record<string, string>[]>([]);
+  // The file is sent again on save so the server parses it the same way it
+  // did for the preview. Kept in its compressed, ready-to-send form.
+  const [uploadedFile, setUploadedFile] = useState<{
+    file: File;
+    encoding: DataFileEncoding;
+  } | null>(null);
   const [saveResult, setSaveResult] = useState<{
     rowsCreated: number;
     townSlug: string;
@@ -345,39 +370,48 @@ export default function UploadPage() {
 
       setUploading(true);
 
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("townId", townId);
-      formData.append("dataCategory", category);
-
       try {
+        const encoded = await encodeDataFile(file);
+        if (encoded.file.size > MAX_REQUEST_FILE_SIZE) {
+          setError(
+            encoded.encoding === "identity" &&
+              file.name.toLowerCase().endsWith(".xlsx")
+              ? `This Excel file is too large to upload. Save it as CSV (File → Save As → CSV) and upload that instead; CSVs are compressed before sending. Or split it by fiscal year.`
+              : `This file is too large to upload. Try splitting it by fiscal year and uploading one file at a time.`
+          );
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", encoded.file);
+        formData.append("encoding", encoded.encoding);
+        formData.append("townId", townId);
+        formData.append("dataCategory", category);
+
         const res = await fetch("/api/upload", {
           method: "POST",
           body: formData,
         });
-        const data = await res.json();
+        // A host-level rejection (e.g. a body-size limit) isn't JSON
+        const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
           if (data.validationErrors) {
             setValidationErrors(data.validationErrors);
           }
-          setError(data.error || "Upload failed");
+          setError(
+            data.error ||
+              (res.status === 413
+                ? "This file is too large for the server to accept. Try splitting it by fiscal year and uploading one file at a time."
+                : "Upload failed")
+          );
           return;
         }
 
         const result: UploadResult = data;
         setUploadResult(result);
         setMappings(result.detectedMappings);
-
-        // Re-read file for raw data to send with mapping confirmation
-        const text = await file.text();
-        const Papa = (await import("papaparse")).default;
-        const parsed = Papa.parse<Record<string, string>>(text, {
-          header: true,
-          skipEmptyLines: true,
-          transformHeader: (h) => h.trim(),
-        });
-        setRawData(parsed.data);
+        setUploadedFile(encoded);
       } catch {
         setError("Upload failed");
       } finally {
@@ -419,29 +453,37 @@ export default function UploadPage() {
     uploadResult && category ? getMappingErrors(category, mappings) : [];
 
   const handleConfirmMapping = async (confirmReplace = false) => {
-    if (!uploadResult) return;
+    if (!uploadResult || !uploadedFile || !category) return;
     if (mappingErrors.length > 0) return;
     setSaving(true);
     setError("");
 
+    const formData = new FormData();
+    formData.append("file", uploadedFile.file);
+    formData.append("encoding", uploadedFile.encoding);
+    formData.append("townId", townId);
+    formData.append("dataCategory", category);
+    formData.append(
+      "mappings",
+      JSON.stringify(
+        mappings.map((m) => ({
+          sourceColumn: m.sourceColumn,
+          targetField: m.targetField,
+          fiscalYear: m.fiscalYear,
+          amountType: m.amountType,
+        }))
+      )
+    );
+    formData.append("confirmReplace", String(confirmReplace));
+
     try {
       const res = await fetch("/api/mapping", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uploadId: uploadResult.uploadId,
-          mappings: mappings.map((m) => ({
-            sourceColumn: m.sourceColumn,
-            targetField: m.targetField,
-            fiscalYear: m.fiscalYear,
-            amountType: m.amountType,
-          })),
-          rawData,
-          confirmReplace,
-        }),
+        body: formData,
       });
 
-      const data = await res.json();
+      // A host-level rejection (e.g. a body-size limit) isn't JSON
+      const data = await res.json().catch(() => ({}));
 
       if (res.status === 409 && data.requiresConfirmation) {
         setReplaceConfirmation(data.affected);
@@ -449,7 +491,12 @@ export default function UploadPage() {
       }
 
       if (!res.ok) {
-        setError(data.error || "Failed to save");
+        setError(
+          data.error ||
+            (res.status === 413
+              ? "This file is too large for the server to accept. Try splitting it by fiscal year and uploading one file at a time."
+              : "Failed to save")
+        );
         return;
       }
 
@@ -758,6 +805,13 @@ export default function UploadPage() {
                         </li>
                       ))}
                     </ul>
+                    <p className="mb-3">
+                      If your file has one row per year instead of a column per
+                      year, map a <strong>Fiscal Year</strong> column and an{" "}
+                      <strong>Amount</strong> column in place of Fiscal Year
+                      Amount, plus an <strong>Amount Type</strong> column if
+                      rows are a mix of Budget and Actual.
+                    </p>
                     {CATEGORY_REQUIREMENTS[category].recommended.length > 0 && (
                       <>
                         <p className="mb-2">
@@ -908,7 +962,7 @@ export default function UploadPage() {
                 onClick={() => {
                   setUploadResult(null);
                   setMappings([]);
-                  setRawData([]);
+                  setUploadedFile(null);
                   setError("");
                   setValidationErrors([]);
                   setSaveResult(null);
@@ -992,7 +1046,7 @@ export default function UploadPage() {
                 onClick={() => {
                   setUploadResult(null);
                   setMappings([]);
-                  setRawData([]);
+                  setUploadedFile(null);
                   setError("");
                   setValidationErrors([]);
                   setSaveResult(null);
